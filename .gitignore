@@ -1,0 +1,30 @@
+# Original personal tools and hardware-specific driver packs
+/DriversRafa/
+/audio/
+/estrutura.txt
+/ENERGIA MAXIMA EM NOTEBOOK.txt
+/Desligar Monitor.exe
+/MixerVolumeWindows10.exe
+/audio-app/icons-temp/
+
+# Local machine configuration and runtime data
+/config/settings.local.json
+/.wolfhub.local.json
+logs/
+*.log
+*.jsonl
+
+# Installer and driver payloads in any nested folder
+*.exe
+*.msi
+*.msix
+*.appx
+*.appxbundle
+*.cab
+*.sys
+*.cat
+*.bin
+*.dll
+*.7z
+*.zip
+*.iso

@@ -1,0 +1,2 @@
+Miku Unicode art placeholder.
+Replace this file with your legally usable Braille/Unicode art. Keep each line within 66 terminal columns.

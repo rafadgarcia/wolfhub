@@ -1,0 +1,7 @@
+{
+  "theme": "miku",
+  "showArt": true,
+  "animations": false,
+  "confirmInstalls": true,
+  "logDirectory": ""
+}

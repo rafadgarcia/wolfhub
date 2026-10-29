@@ -1,0 +1,6 @@
+{
+  "id": "support",
+  "name": "Support",
+  "description": "Basic diagnostics and maintenance tools.",
+  "packages": ["hwinfo", "crystaldiskinfo-shizuku", "wiztree", "powertoys", "git"]
+}

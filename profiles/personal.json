@@ -1,0 +1,6 @@
+{
+  "id": "personal",
+  "name": "Personal",
+  "description": "Personal applications drawn from the existing WinGet list.",
+  "packages": ["chrome", "steam", "winrar", "powertoys", "hwinfo", "crystaldiskinfo-shizuku", "wiztree", "qbittorrent", "obs", "git", "gh", "fancontrol", "dotnet8", "vcredist-x64", "vcredist-x86"]
+}

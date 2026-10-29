@@ -1,0 +1,6 @@
+{
+  "id": "minimal",
+  "name": "Minimal",
+  "description": "Browser, archive utility and essential runtimes.",
+  "packages": ["chrome", "winrar", "dotnet8", "vcredist-x64", "vcredist-x86"]
+}

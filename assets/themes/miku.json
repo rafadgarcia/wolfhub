@@ -1,0 +1,15 @@
+{
+  "id": "miku",
+  "name": "Miku Edition",
+  "colors": {
+    "background": "#0B1018",
+    "accent": "#39C5BB",
+    "accentLight": "#76E5DC",
+    "pink": "#FF91C8",
+    "text": "#EAF2F5",
+    "muted": "#81939D",
+    "success": "#65D6A0",
+    "error": "#FF6B81"
+  },
+  "terminalFallback": "cyan-magenta-gray"
+}

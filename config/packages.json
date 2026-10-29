@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "packages": [
+    { "id": "chrome", "name": "Google Chrome", "wingetId": "Google.Chrome", "category": "Browsers", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "steam", "name": "Steam", "wingetId": "Valve.Steam", "category": "Gaming", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "winrar", "name": "WinRAR", "wingetId": "RARLab.WinRAR", "category": "Utilities", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "powertoys", "name": "Microsoft PowerToys", "wingetId": "Microsoft.PowerToys", "category": "Utilities", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "hwinfo", "name": "HWiNFO", "wingetId": "REALiX.HWiNFO", "category": "Diagnostics", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "crystaldiskinfo-shizuku", "name": "CrystalDiskInfo Shizuku Edition", "wingetId": "CrystalDewWorld.CrystalDiskInfo.ShizukuEdition", "category": "Diagnostics", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "wiztree", "name": "WizTree", "wingetId": "AntibodySoftware.WizTree", "category": "Diagnostics", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "qbittorrent", "name": "qBittorrent", "wingetId": "qBittorrent.qBittorrent", "category": "Internet", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "obs", "name": "OBS Studio", "wingetId": "OBSProject.OBSStudio", "category": "Media", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "git", "name": "Git", "wingetId": "Git.Git", "category": "Development", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "gh", "name": "GitHub CLI", "wingetId": "GitHub.cli", "category": "Development", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "fancontrol", "name": "Fan Control", "wingetId": "Rem0o.FanControl", "category": "Diagnostics", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "dotnet8", "name": ".NET Desktop Runtime 8", "wingetId": "Microsoft.DotNet.DesktopRuntime.8", "category": "Runtimes", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "vcredist-x64", "name": "Microsoft Visual C++ 2015-2022 x64", "wingetId": "Microsoft.VCRedist.2015+.x64", "category": "Runtimes", "source": "Winget.bat", "idStatus": "inherited-unverified" },
+    { "id": "vcredist-x86", "name": "Microsoft Visual C++ 2015-2022 x86", "wingetId": "Microsoft.VCRedist.2015+.x86", "category": "Runtimes", "source": "Winget.bat", "idStatus": "inherited-unverified" }
+  ]
+}
