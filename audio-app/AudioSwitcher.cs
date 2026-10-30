@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -255,26 +255,66 @@ namespace WolfHubAudio
         public bool Primary;
         public ButtonGlyph Glyph;
         private bool hover, pressed;
-        public RoundedButton() { FlatStyle=FlatStyle.Flat; FlatAppearance.BorderSize=0; Cursor=Cursors.Hand; TextAlign=ContentAlignment.MiddleCenter; }
+        public RoundedButton()
+        {
+            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);
+            FlatStyle=FlatStyle.Flat; FlatAppearance.BorderSize=0; Cursor=Cursors.Hand; TextAlign=ContentAlignment.MiddleCenter;
+        }
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(this,Color.FromArgb(11,17,27)));
+        }
         protected override void OnPaint(PaintEventArgs e)
         {
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(this,Color.FromArgb(11,17,27)));
             e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            var bounds=new Rectangle(0,0,Width-1,Height-1); int radius=8;
+            e.Graphics.PixelOffsetMode=System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+            var rect=new RectangleF(0.5F,0.5F,Math.Max(1F,Width-2F),Math.Max(1F,Height-2F));
+            float radius=8F;
             Color fill=Primary?Color.FromArgb(57,197,214):Color.FromArgb(28,45,61);
-            if(!Enabled) fill=Color.FromArgb(25,37,51); else if(pressed) fill=Primary?Color.FromArgb(36,158,175):Color.FromArgb(40,61,77); else if(hover) fill=Primary?Color.FromArgb(85,216,230):Color.FromArgb(36,55,72);
-            using(var path=new System.Drawing.Drawing2D.GraphicsPath())
+            if(!Enabled) fill=Color.FromArgb(22,34,47);
+            else if(pressed) fill=Primary?Color.FromArgb(36,158,175):Color.FromArgb(40,61,77);
+            else if(hover) fill=Primary?Color.FromArgb(85,216,230):Color.FromArgb(36,55,72);
+            Color borderColor=!Enabled?Color.FromArgb(35,51,66):(Primary?fill:(hover?Color.FromArgb(62,90,112):Color.FromArgb(45,67,84)));
+            using(var path=GraphicsExtensions.CreateRoundedRectanglePath(rect,radius))
             using(var brush=new SolidBrush(fill))
-            using(var pen=new Pen(Primary?Color.FromArgb(57,197,214):Color.FromArgb(41,61,76)))
+            using(var pen=new Pen(borderColor,1F))
             {
-                path.AddArc(bounds.X,bounds.Y,radius,radius,180,90); path.AddArc(bounds.Right-radius,bounds.Y,radius,radius,270,90);
-                path.AddArc(bounds.Right-radius,bounds.Bottom-radius,radius,radius,0,90); path.AddArc(bounds.X,bounds.Bottom-radius,radius,radius,90,90); path.CloseFigure();
-                e.Graphics.FillPath(brush,path); if(!Primary)e.Graphics.DrawPath(pen,path);
+                e.Graphics.FillPath(brush,path);
+                e.Graphics.DrawPath(pen,path);
             }
-            Color textColor=Primary?Color.FromArgb(11,17,27):Color.FromArgb(237,248,250); if(!Enabled)textColor=Color.FromArgb(120,142,158);
-            var textBounds=bounds;
-            if(Glyph!=ButtonGlyph.None) { Color glyphColor=!Enabled?Color.FromArgb(120,142,158):(Primary?Color.FromArgb(11,17,27):Color.FromArgb(164,185,198)); int scale=Math.Max(1,(int)Math.Round(e.Graphics.DpiX/96F)); int size=Math.Min(18*scale,Math.Max(12,bounds.Height-10)); int inset=12*scale; IconResources.Draw(e.Graphics,IconResources.Name(Glyph),new Rectangle(bounds.X+inset,bounds.Y+(bounds.Height-size)/2,size,size),glyphColor); textBounds.X+=inset+size+2*scale; textBounds.Width-=inset+size+10*scale; }
-            TextRenderer.DrawText(e.Graphics,Text,Font,textBounds,Glyph==ButtonGlyph.None?textColor:textColor,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
-            if(Focused) ControlPaint.DrawFocusRectangle(e.Graphics,Rectangle.Inflate(bounds,-4,-4));
+            Color textColor=Primary?Color.FromArgb(11,17,27):Color.FromArgb(237,248,250);
+            if(!Enabled)textColor=Color.FromArgb(110,132,148);
+            var bounds=new Rectangle(0,0,Width,Height);
+            if(Glyph!=ButtonGlyph.None)
+            {
+                Color glyphColor=!Enabled?Color.FromArgb(110,132,148):(Primary?Color.FromArgb(11,17,27):Color.FromArgb(180,202,214));
+                float scale=e.Graphics.DpiX/96F;
+                int size=Math.Min((int)Math.Round(16*scale),Math.Max(12,bounds.Height-10));
+                if(String.IsNullOrEmpty(Text))
+                {
+                    int gx=(int)Math.Round((bounds.Width-size)/2.0);
+                    int gy=(int)Math.Round((bounds.Height-size)/2.0);
+                    IconResources.Draw(e.Graphics,IconResources.Name(Glyph),new Rectangle(gx,gy,size,size),glyphColor);
+                }
+                else
+                {
+                    int gap=(int)Math.Round(7*scale);
+                    int padH=(int)Math.Round(10*scale);
+                    Size textSize=TextRenderer.MeasureText(e.Graphics,Text,Font,new Size(int.MaxValue,int.MaxValue),TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
+                    int totalW=size+gap+textSize.Width;
+                    int startX=Math.Max(padH,(bounds.Width-totalW)/2);
+                    int gy=(bounds.Height-size)/2;
+                    IconResources.Draw(e.Graphics,IconResources.Name(Glyph),new Rectangle(startX,gy,size,size),glyphColor);
+                    var textBounds=new Rectangle(startX+size+gap,0,Math.Max(0,bounds.Width-(startX+size+gap)-6),bounds.Height);
+                    TextRenderer.DrawText(e.Graphics,Text,Font,textBounds,textColor,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
+                }
+            }
+            else if(!String.IsNullOrEmpty(Text))
+            {
+                TextRenderer.DrawText(e.Graphics,Text,Font,bounds,textColor,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.SingleLine);
+            }
+            if(Focused&&ShowFocusCues) ControlPaint.DrawFocusRectangle(e.Graphics,Rectangle.Inflate(bounds,-4,-4));
         }
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); hover=true; Invalidate(); }
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); hover=false; pressed=false; Invalidate(); }
@@ -361,10 +401,27 @@ namespace WolfHubAudio
         public string IconName;
         public Color IconColor=Color.FromArgb(57,197,214);
         public int ContentSize;
-        public LucideIconControl() { SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.SupportsTransparentBackColor,true); BackColor=Color.Transparent; }
+        public bool ShowBadge;
+        public Color BadgeBackColor=Color.FromArgb(15,25,37);
+        public Color BadgeBorderColor=Color.FromArgb(35,53,70);
+        public LucideIconControl() { SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.SupportsTransparentBackColor|ControlStyles.ResizeRedraw,true); BackColor=Color.Transparent; }
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e); if(String.IsNullOrEmpty(IconName))return;
+            base.OnPaint(e);
+            e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            if(ShowBadge&&ClientSize.Width>4&&ClientSize.Height>4)
+            {
+                e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(this,Color.FromArgb(21,34,49)));
+                var badgeRect=new RectangleF(0.5F,0.5F,ClientSize.Width-2F,ClientSize.Height-2F);
+                using(var path=GraphicsExtensions.CreateRoundedRectanglePath(badgeRect,8F))
+                using(var fill=new SolidBrush(BadgeBackColor))
+                using(var pen=new Pen(BadgeBorderColor,1F))
+                {
+                    e.Graphics.FillPath(fill,path);
+                    e.Graphics.DrawPath(pen,path);
+                }
+            }
+            if(String.IsNullOrEmpty(IconName))return;
             int logical=ContentSize>0?ContentSize:Math.Min(ClientSize.Width,ClientSize.Height);
             int size=Math.Max(1,Math.Min((int)Math.Round(logical*e.Graphics.DpiX/96F),Math.Min(ClientSize.Width,ClientSize.Height)));
             var bounds=new Rectangle((ClientSize.Width-size)/2,(ClientSize.Height-size)/2,size,size);
@@ -375,20 +432,46 @@ namespace WolfHubAudio
     {
         public bool Selected, Applied;
         private bool hover;
-        public ProfileEntryButton() { FlatStyle=FlatStyle.Flat; FlatAppearance.BorderSize=0; Cursor=Cursors.Hand; TextAlign=ContentAlignment.MiddleLeft; }
+        public ProfileEntryButton()
+        {
+            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);
+            FlatStyle=FlatStyle.Flat; FlatAppearance.BorderSize=0; Cursor=Cursors.Hand; TextAlign=ContentAlignment.MiddleLeft;
+        }
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(this,Color.FromArgb(16,26,39)));
+        }
         protected override void OnPaint(PaintEventArgs e)
         {
-            e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; var r=new Rectangle(0,0,Width-1,Height-1);
-            Color background=Selected?Color.FromArgb(37,71,83):(hover?Color.FromArgb(28,45,61):Color.FromArgb(16,26,39));
-            using(var path=new System.Drawing.Drawing2D.GraphicsPath()) using(var fill=new SolidBrush(background)) using(var border=new Pen(Selected?Color.FromArgb(57,197,214):background))
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(this,Color.FromArgb(16,26,39)));
+            e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            e.Graphics.PixelOffsetMode=System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+            var rect=new RectangleF(0.5F,0.5F,Math.Max(1F,Width-2F),Math.Max(1F,Height-2F));
+            Color background=Selected?Color.FromArgb(29,60,74):(hover?Color.FromArgb(28,45,61):Color.FromArgb(21,34,49));
+            Color borderColor=Selected?Color.FromArgb(57,197,214):(hover?Color.FromArgb(56,82,102):Color.FromArgb(33,50,66));
+            using(var path=GraphicsExtensions.CreateRoundedRectanglePath(rect,8F))
+            using(var fill=new SolidBrush(background))
+            using(var border=new Pen(borderColor,1F))
             {
-                int rad=8; path.AddArc(r.Left,r.Top,rad,rad,180,90); path.AddArc(r.Right-rad,r.Top,rad,rad,270,90); path.AddArc(r.Right-rad,r.Bottom-rad,rad,rad,0,90); path.AddArc(r.Left,r.Bottom-rad,rad,rad,90,90); path.CloseFigure();
-                e.Graphics.FillPath(fill,path); e.Graphics.DrawPath(border,path);
+                e.Graphics.FillPath(fill,path);
+                e.Graphics.DrawPath(border,path);
             }
-            if(Selected) using(var b=new SolidBrush(Color.FromArgb(57,197,214))) e.Graphics.FillRectangle(b,5,8,3,Height-16);
-            TextRenderer.DrawText(e.Graphics,Text,Font,new Rectangle(18,0,Width-48,Height),Color.FromArgb(237,248,250),TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
-            if(Applied) { using(var b=new SolidBrush(Color.FromArgb(84,214,160))) e.Graphics.FillEllipse(b,Width-24,(Height-8)/2,8,8); }
-            if(Focused) ControlPaint.DrawFocusRectangle(e.Graphics,Rectangle.Inflate(r,-4,-4));
+            if(Selected)
+            {
+                using(var b=new SolidBrush(Color.FromArgb(57,197,214)))
+                    e.Graphics.FillRoundedRectangle(b,new Rectangle(6,9,3,Math.Max(6,Height-18)),2);
+            }
+            int textLeft=Selected?18:14;
+            int rightReserve=Applied?34:14;
+            Color textColor=Selected?Color.FromArgb(242,250,252):(hover?Color.FromArgb(237,248,250):Color.FromArgb(196,214,224));
+            TextRenderer.DrawText(e.Graphics,Text,Font,new Rectangle(textLeft,0,Math.Max(0,Width-textLeft-rightReserve),Height),textColor,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.SingleLine|TextFormatFlags.NoPrefix);
+            if(Applied)
+            {
+                int dotX=Width-21,dotY=(Height-8)/2;
+                using(var halo=new SolidBrush(Color.FromArgb(45,84,214,160))) e.Graphics.FillEllipse(halo,dotX-3,dotY-3,14,14);
+                using(var b=new SolidBrush(Color.FromArgb(84,214,160))) e.Graphics.FillEllipse(b,dotX,dotY,8,8);
+            }
+            if(Focused&&ShowFocusCues) ControlPaint.DrawFocusRectangle(e.Graphics,Rectangle.Inflate(new Rectangle(0,0,Width,Height),-4,-4));
         }
         protected override void OnMouseEnter(EventArgs e) { base.OnMouseEnter(e); hover=true; Invalidate(); }
         protected override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); hover=false; Invalidate(); }
@@ -400,18 +483,19 @@ namespace WolfHubAudio
         public event EventHandler Toggled;
         public VisibilityToggle()
         {
-            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.Selectable,true);
+            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.Selectable|ControlStyles.ResizeRedraw,true);
             TabStop=true; Cursor=Cursors.Hand; AccessibleRole=AccessibleRole.CheckButton; AccessibleName="Visibilidade do dispositivo";
         }
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e); e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            int h=Math.Min(24,Height-4),w=Math.Min(48,Width-4),x=(Width-w)/2,y=(Height-h)/2;
-            Color track=!Enabled?Color.FromArgb(35,47,59):(Checked?Color.FromArgb(57,197,214):Color.FromArgb(54,69,82));
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(this,Color.FromArgb(21,34,49)));
+            e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            int h=Math.Min(24,Height-4),w=Math.Min(46,Width-4),x=(Width-w)/2,y=(Height-h)/2;
+            Color track=!Enabled?Color.FromArgb(35,47,59):(Checked?Color.FromArgb(57,197,214):Color.FromArgb(46,62,76));
             using(var brush=new SolidBrush(track)) e.Graphics.FillRoundedRectangle(brush,new Rectangle(x,y,w,h),h/2);
             int dot=h-6,dx=Checked?x+w-dot-3:x+3;
             using(var brush=new SolidBrush(Checked?Color.FromArgb(11,17,27):Color.FromArgb(237,248,250)))e.Graphics.FillEllipse(brush,dx,y+3,dot,dot);
-            if(Focused)ControlPaint.DrawFocusRectangle(e.Graphics,Rectangle.Inflate(ClientRectangle,-1,-1));
+            if(Focused&&ShowFocusCues)ControlPaint.DrawFocusRectangle(e.Graphics,Rectangle.Inflate(ClientRectangle,-1,-1));
         }
         protected override void OnClick(EventArgs e)
         {
@@ -458,6 +542,81 @@ namespace WolfHubAudio
             return hadSignal!=hasSignal||Math.Abs(currentPeak-previousPeak)>=RepaintThreshold;
         }
     }
+    internal static class UiSpacing
+    {
+        public const int Unit=4;
+        public const int ElementGap=8;
+        public const int ContainerGap=12;
+        public const int CardPadding=16;
+        public const int WindowPadding=16;
+        public static int Scale(int logical,int dpi)
+        {
+            if(dpi<=0)dpi=96;
+            return Math.Max(0,(int)Math.Round(logical*dpi/96.0,MidpointRounding.AwayFromZero));
+        }
+        public static int Scale(Control parent,int logical)
+        {
+            if(parent==null)return logical;
+            using(Graphics graphics=parent.CreateGraphics())return Scale(logical,(int)Math.Round(graphics.DpiX));
+        }
+        public static int Unscale(Control parent,int physical)
+        {
+            if(parent==null)return physical;
+            using(Graphics graphics=parent.CreateGraphics())return Unscale(physical,(int)Math.Round(graphics.DpiX));
+        }
+        public static int Unscale(int physical,int dpi)
+        {
+            if(dpi<96)dpi=96;
+            return Math.Max(0,(int)Math.Round(physical*96.0/dpi,MidpointRounding.AwayFromZero));
+        }
+        public static Padding Inset(Control parent,int logical)
+        {
+            return new Padding(Math.Max(0,logical));
+        }
+        public static Padding GapMargin(Control parent,int logical)
+        {
+            int half=Math.Max(1,logical/2); return new Padding(half);
+        }
+    }
+    internal static class HomeLayoutGeometry
+    {
+        public const int AppHeaderHeight=64;
+        public const int SectionHeaderHeight=56;
+        public const int AudioCardHeight=148;
+        public const int FooterCellHeight=64;
+        public const int ProfileSidebarWidth=190;
+        public const int SidebarColumnGap=16;
+        public const int WindowPadding=16;
+        public const int CardGap=12;
+        public static int CardsHeight { get { return AudioCardHeight*3+CardGap*2; } }
+        public static int HomeContentHeight { get { return SectionHeaderHeight+CardsHeight+FooterCellHeight+CardGap*2; } }
+        public static int MainColumnWidth(int formClientWidth) { return formClientWidth-(WindowPadding*2)-ProfileSidebarWidth-SidebarColumnGap; }
+        // Centraliza a geometria vertical. Nenhum estado da janela muda a quantidade de colunas.
+        public static Rectangle[] StackedCardBounds(int contentWidth,int cardHeight,int gap)
+        {
+            int width=Math.Max(0,contentWidth),height=Math.Max(0,cardHeight),space=Math.Max(0,gap);
+            return new[] {
+                new Rectangle(0,0,width,height),
+                new Rectangle(0,height+space,width,height),
+                new Rectangle(0,2*(height+space),width,height)
+            };
+        }
+        public static Rectangle ProfileAddButtonBounds(Size clientSize,int buttonSize,int rightInset)
+        {
+            int width=Math.Min(buttonSize,Math.Max(0,clientSize.Width-rightInset));
+            int height=Math.Min(buttonSize,Math.Max(0,clientSize.Height));
+            return new Rectangle(Math.Max(0,clientSize.Width-rightInset-width),Math.Max(0,(clientSize.Height-height)/2),width,height);
+        }
+    }
+    internal static class ProfileSidebarOrdering
+    {
+        public static IEnumerable<AudioProfile> Order(IEnumerable<AudioProfile> profiles,string selectedId,string activeId)
+        {
+            if(profiles==null)return Enumerable.Empty<AudioProfile>();
+            return profiles.OrderBy(p=>String.Equals(p.Id,activeId,StringComparison.Ordinal)?0:
+                String.Equals(p.Id,selectedId,StringComparison.Ordinal)?1:2);
+        }
+    }
     internal sealed class DeviceVisibilityEntry : RoundedSurfacePanel
     {
         public readonly AudioDevice Device;
@@ -472,10 +631,10 @@ namespace WolfHubAudio
         private readonly LucideIconControl visibilityIcon;
         public DeviceVisibilityEntry(AudioDevice device,Preferences preferences)
         {
-            Device=device; this.preferences=preferences; Height=78; Margin=new Padding(0,0,0,8); BackColor=Color.FromArgb(21,34,49); BorderColor=Color.FromArgb(41,61,76); Radius=10;
-            var icon=new LucideIconControl { IconName=device.Flow==Flow.Render?"volume-2":"mic",IconColor=Color.FromArgb(57,197,214),ContentSize=24 };
-            nameLabel=new Label { AutoEllipsis=true,Font=new Font("Segoe UI",10F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250),BackColor=BackColor };
-            summaryLabel=new Label { AutoEllipsis=true,Font=new Font("Segoe UI",8.75F),ForeColor=Color.FromArgb(164,185,198),BackColor=BackColor };
+            Device=device; this.preferences=preferences; Height=76; Margin=new Padding(0,0,0,8); BackColor=Color.FromArgb(21,34,49); BorderColor=Color.FromArgb(41,61,76); Radius=10;
+            var icon=new LucideIconControl { IconName=device.Flow==Flow.Render?"volume-2":"mic",IconColor=Color.FromArgb(57,197,214),ContentSize=20,ShowBadge=true };
+            nameLabel=new Label { AutoEllipsis=true,Font=new Font("Segoe UI",10F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250),BackColor=BackColor,TextAlign=ContentAlignment.MiddleLeft };
+            summaryLabel=new Label { AutoEllipsis=true,Font=new Font("Segoe UI",8.75F),ForeColor=Color.FromArgb(164,185,198),BackColor=BackColor,TextAlign=ContentAlignment.MiddleLeft };
             var fullName=preferences.GetAlias(device.Id);
             nameLabel.Text=String.IsNullOrWhiteSpace(fullName)?device.Name:fullName+"  ·  "+device.Name;
             summaryLabel.Text=AudioDeviceUiState.Summary(device);
@@ -483,7 +642,7 @@ namespace WolfHubAudio
             renameButton.Click+=delegate { if(RenameRequested!=null)RenameRequested(Device); };
             if(device.Flow==Flow.Render)
             {
-                testButton=new RoundedButton { Text="Testar",Width=82,Height=34,Glyph=ButtonGlyph.Play,Font=new Font("Segoe UI",9F),ForeColor=Color.FromArgb(237,248,250),BackColor=Color.FromArgb(28,45,61),Enabled=AudioDeviceUiState.CanTest(device) };
+                testButton=new RoundedButton { Text="Testar",Width=86,Height=34,Glyph=ButtonGlyph.Play,Font=new Font("Segoe UI",9F),ForeColor=Color.FromArgb(237,248,250),BackColor=Color.FromArgb(28,45,61),Enabled=AudioDeviceUiState.CanTest(device) };
                 testButton.Click+=delegate { if(TestRequested!=null)TestRequested(Device); };
                 tips.SetToolTip(testButton,testButton.Enabled?"Reproduzir tom neste endpoint (pede confirmação).":"Teste disponível apenas para saídas ativas.");
                 Controls.Add(testButton);
@@ -505,18 +664,31 @@ namespace WolfHubAudio
         protected override void Dispose(bool disposing) { if(disposing)tips.Dispose(); base.Dispose(disposing); }
         private void LayoutEntry(Control icon)
         {
-            int pad=12,right=Math.Max(pad,ClientSize.Width-pad);
-            icon.SetBounds(pad,15,46,46);
-            int toggleLeft=right-50; Toggle.SetBounds(toggleLeft,25,50,28); visibilityIcon.SetBounds(toggleLeft-26,29,18,18);
-            renameButton.SetBounds(toggleLeft-8-renameButton.Width,22,renameButton.Width,34);
-            if(testButton!=null)testButton.SetBounds(renameButton.Left-8-testButton.Width,22,testButton.Width,34);
+            int pad=14,h=ClientSize.Height,right=Math.Max(pad,ClientSize.Width-pad);
+            icon.SetBounds(pad,(h-40)/2,40,40);
+            int toggleLeft=right-50;
+            Toggle.SetBounds(toggleLeft,(h-28)/2,50,28);
+            visibilityIcon.SetBounds(toggleLeft-24,(h-18)/2,18,18);
+            renameButton.SetBounds(visibilityIcon.Left-10-renameButton.Width,(h-34)/2,renameButton.Width,34);
+            int actionsLeft=renameButton.Left;
+            if(testButton!=null)
+            {
+                testButton.SetBounds(renameButton.Left-8-testButton.Width,(h-34)/2,testButton.Width,34);
+                actionsLeft=testButton.Left;
+            }
             else if(Controls.Count>0)
             {
                 var unavailable=Controls.OfType<Label>().FirstOrDefault(x=>x.Text=="Sem teste de gravação");
-                if(unavailable!=null)unavailable.SetBounds(renameButton.Left-8-145,22,145,34);
+                if(unavailable!=null)
+                {
+                    unavailable.SetBounds(renameButton.Left-8-145,(h-34)/2,145,34);
+                    actionsLeft=unavailable.Left;
+                }
             }
-            int textWidth=Math.Max(80,(testButton==null?renameButton.Left-12:testButton.Left-12)-(pad+58));
-            nameLabel.SetBounds(pad+58,14,textWidth,24); summaryLabel.SetBounds(pad+58,40,textWidth,22);
+            int textX=pad+52;
+            int textWidth=Math.Max(80,actionsLeft-12-textX);
+            nameLabel.SetBounds(textX,14,textWidth,24);
+            summaryLabel.SetBounds(textX,38,textWidth,22);
         }
     }
     internal sealed class DeviceVisibilityDialog : Form
@@ -531,8 +703,8 @@ namespace WolfHubAudio
         {
             this.enumerate=enumerate; this.setVisibility=setVisibility; this.renameDevice=renameDevice; this.testDevice=testDevice; this.preferences=preferences;
             Text="Gerenciar visibilidade dos dispositivos"; StartPosition=FormStartPosition.CenterParent; Width=940; Height=640; MinimumSize=new Size(760,520); BackColor=Color.FromArgb(11,17,27); ForeColor=Color.FromArgb(237,248,250); Font=new Font("Segoe UI",9.5F);
-            var title=new Label { Text="Gerenciar dispositivos",Left=18,Top=14,Width=620,Height=30,Font=new Font("Segoe UI",18F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250) };
-            var description=new Label { Text="Visibilidade global, apelidos e identificação de saídas de áudio.",Left=18,Top=47,Width=720,Height=24,ForeColor=Color.FromArgb(164,185,198) };
+            var title=new Label { Text="Gerenciar dispositivos",Left=18,Top=14,Width=620,Height=34,Font=new Font("Segoe UI",18F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250) };
+            var description=new Label { Text="Visibilidade global, apelidos e identificação de saídas de áudio.",Left=18,Top=48,Width=720,Height=24,ForeColor=Color.FromArgb(164,185,198) };
             countLabel.ForeColor=Color.FromArgb(164,185,198); countLabel.TextAlign=ContentAlignment.MiddleLeft;
             entries.FlowDirection=FlowDirection.TopDown; entries.WrapContents=false; entries.AutoScroll=true; entries.BackColor=BackColor; entries.Padding=new Padding(0,2,4,2);
             var note=new Label { Text="Visibilidade registrada pelo WolfHub; mudanças feitas por outras ferramentas podem não aparecer. Gravação não possui teste neste painel.",Left=18,Height=40,ForeColor=Color.FromArgb(120,142,158),TextAlign=ContentAlignment.MiddleLeft,AutoEllipsis=true };
@@ -541,12 +713,13 @@ namespace WolfHubAudio
             Controls.AddRange(new Control[]{title,description,countLabel,refresh,entries,note,close});
             Resize+=delegate
             {
-                int w=Math.Max(320,ClientSize.Width-36); title.Width=w; description.Width=w; countLabel.SetBounds(18,74,Math.Max(120,w-refresh.Width-12),22); refresh.SetBounds(ClientSize.Width-18-refresh.Width,68,refresh.Width,34);
-                entries.SetBounds(18,100,w,Math.Max(120,ClientSize.Height-166)); note.SetBounds(18,ClientSize.Height-58,Math.Max(180,w-close.Width-18),40); close.SetBounds(ClientSize.Width-122,ClientSize.Height-54,104,36);
+                int w=Math.Max(320,ClientSize.Width-36); title.Width=w; description.Width=w; countLabel.SetBounds(18,74,Math.Max(120,w-refresh.Width-12),24); refresh.SetBounds(ClientSize.Width-18-refresh.Width,69,refresh.Width,34);
+                entries.SetBounds(18,106,w,Math.Max(120,ClientSize.Height-172)); note.SetBounds(18,ClientSize.Height-58,Math.Max(180,w-close.Width-18),40); close.SetBounds(ClientSize.Width-122,ClientSize.Height-54,104,36);
                 ResizeRows();
             };
             Load+=delegate { ReloadEntries(); };
         }
+        protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); GraphicsExtensions.ApplyDarkTitleBar(Handle); }
         private void ReloadEntries()
         {
             entries.SuspendLayout(); entries.Controls.Clear();
@@ -574,84 +747,239 @@ namespace WolfHubAudio
         public string CurrentText="";
         public string FullText="";
         public bool HasDefault;
+        public AudioStatusIndicator()
+        {
+            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);
+        }
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(this,Color.FromArgb(11,17,27)));
+        }
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e); using(var dot=new SolidBrush(HasDefault?Color.FromArgb(84,214,160):Color.FromArgb(120,142,158))) e.Graphics.FillEllipse(dot,1,(Height-8)/2,8,8);
-            TextRenderer.DrawText(e.Graphics,CurrentText,Font,new Rectangle(15,0,Math.Max(0,Width-15),Height),Color.FromArgb(164,185,198),TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(this,Color.FromArgb(11,17,27)));
+            e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            var rect=new RectangleF(0.5F,0.5F,Math.Max(1F,Width-2F),Math.Max(1F,Height-2F));
+            using(var path=GraphicsExtensions.CreateRoundedRectanglePath(rect,8F))
+            using(var fill=new SolidBrush(Color.FromArgb(16,26,39)))
+            using(var pen=new Pen(Color.FromArgb(35,52,68),1F))
+            {
+                e.Graphics.FillPath(fill,path);
+                e.Graphics.DrawPath(pen,path);
+            }
+            int dotX=12,dotY=(Height-8)/2;
+            using(var dot=new SolidBrush(HasDefault?Color.FromArgb(84,214,160):Color.FromArgb(120,142,158)))
+                e.Graphics.FillEllipse(dot,dotX,dotY,8,8);
+            TextRenderer.DrawText(e.Graphics,CurrentText,Font,new Rectangle(dotX+14,0,Math.Max(0,Width-(dotX+24)),Height),Color.FromArgb(186,206,218),TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.SingleLine|TextFormatFlags.NoPrefix);
         }
+    }
+    internal sealed class StatusBadgeControl : Control
+    {
+        private bool isActive;
+        public bool IsActive { get { return isActive; } set { if(isActive!=value) { isActive=value; Invalidate(); } } }
+        public StatusBadgeControl()
+        {
+            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);
+        }
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(this,Color.FromArgb(11,17,27)));
+        }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(this,Color.FromArgb(11,17,27)));
+            e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            var rect=new RectangleF(0.5F,0.5F,Math.Max(1F,Width-2F),Math.Max(1F,Height-2F));
+            Color fill=isActive?Color.FromArgb(19,50,46):Color.FromArgb(22,35,49);
+            Color border=isActive?Color.FromArgb(40,108,90):Color.FromArgb(41,61,76);
+            Color fg=isActive?Color.FromArgb(84,214,160):Color.FromArgb(156,178,192);
+            using(var path=GraphicsExtensions.CreateRoundedRectanglePath(rect,8F))
+            using(var brush=new SolidBrush(fill))
+            using(var pen=new Pen(border,1F))
+            {
+                e.Graphics.FillPath(brush,path);
+                e.Graphics.DrawPath(pen,path);
+            }
+            Size textSize=TextRenderer.MeasureText(e.Graphics,Text,Font,new Size(int.MaxValue,int.MaxValue),TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
+            int dotSize=7,gap=6;
+            int totalW=dotSize+gap+textSize.Width;
+            int startX=Math.Max(10,(Width-totalW)/2);
+            using(var dot=new SolidBrush(fg))
+                e.Graphics.FillEllipse(dot,startX,(Height-dotSize)/2,dotSize,dotSize);
+            var textRect=new Rectangle(startX+dotSize+gap,0,Math.Max(0,Width-(startX+dotSize+gap)-6),Height);
+            TextRenderer.DrawText(e.Graphics,Text,Font,textRect,fg,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
+        }
+        protected override void OnTextChanged(EventArgs e) { base.OnTextChanged(e); Invalidate(); }
     }
     internal static class GraphicsExtensions
     {
+        [DllImport("dwmapi.dll", PreserveSig=true)] private static extern int DwmSetWindowAttribute(IntPtr hwnd,int attribute,ref int value,int valueSize);
+        public static void ApplyDarkTitleBar(IntPtr handle)
+        {
+            if(handle==IntPtr.Zero)return;
+            try { int enabled=1; int hr=DwmSetWindowAttribute(handle,20,ref enabled,sizeof(int)); if(hr!=0)DwmSetWindowAttribute(handle,19,ref enabled,sizeof(int)); } catch { }
+        }
+        public static Color ResolveParentBackColor(Control control,Color fallback)
+        {
+            Control current=control!=null?control.Parent:null;
+            while(current!=null)
+            {
+                if(current.BackColor!=Color.Transparent&&current.BackColor.A==255)return current.BackColor;
+                current=current.Parent;
+            }
+            return fallback;
+        }
+        public static System.Drawing.Drawing2D.GraphicsPath CreateRoundedRectanglePath(RectangleF r,float radius)
+        {
+            var p=new System.Drawing.Drawing2D.GraphicsPath();
+            float d=Math.Min(radius*2F,Math.Min(r.Width,r.Height));
+            if(d<=1F) { p.AddRectangle(r); return p; }
+            p.AddArc(r.Left,r.Top,d,d,180,90);
+            p.AddArc(r.Right-d,r.Top,d,d,270,90);
+            p.AddArc(r.Right-d,r.Bottom-d,d,d,0,90);
+            p.AddArc(r.Left,r.Bottom-d,d,d,90,90);
+            p.CloseFigure();
+            return p;
+        }
         public static void FillRoundedRectangle(this Graphics g,Brush brush,Rectangle r,int radius)
-        { using(var p=new System.Drawing.Drawing2D.GraphicsPath()) { p.AddArc(r.Left,r.Top,radius,radius,180,90); p.AddArc(r.Right-radius,r.Top,radius,radius,270,90); p.AddArc(r.Right-radius,r.Bottom-radius,radius,radius,0,90); p.AddArc(r.Left,r.Bottom-radius,radius,radius,90,90); p.CloseFigure(); g.FillPath(brush,p); } }
+        {
+            using(var p=CreateRoundedRectanglePath(new RectangleF(r.X,r.Y,r.Width,r.Height),radius))
+                g.FillPath(brush,p);
+        }
     }
     internal class RoundedSurfacePanel : Panel
     {
         public Color BorderColor=Color.FromArgb(41,61,76);
         public int Radius=12;
-        public RoundedSurfacePanel() { SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer,true); }
+        public RoundedSurfacePanel() { SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true); }
         protected override void OnPaintBackground(PaintEventArgs e)
         {
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(this,Color.FromArgb(11,17,27)));
             e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            using(var fill=new SolidBrush(BackColor)) e.Graphics.FillRoundedRectangle(fill,new Rectangle(0,0,Width-1,Height-1),Radius);
+            var rect=new RectangleF(0.5F,0.5F,Math.Max(1F,Width-2F),Math.Max(1F,Height-2F));
+            using(var path=GraphicsExtensions.CreateRoundedRectanglePath(rect,Radius))
+            using(var fill=new SolidBrush(BackColor))
+                e.Graphics.FillPath(fill,path);
         }
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e); e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-            using(var path=new System.Drawing.Drawing2D.GraphicsPath()) using(var pen=new Pen(BorderColor))
-            { int r=Radius; path.AddArc(0,0,r,r,180,90); path.AddArc(Width-r-1,0,r,r,270,90); path.AddArc(Width-r-1,Height-r-1,r,r,0,90); path.AddArc(0,Height-r-1,r,r,90,90); path.CloseFigure(); e.Graphics.DrawPath(pen,path); }
+            base.OnPaint(e);
+            e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            var rect=new RectangleF(0.5F,0.5F,Math.Max(1F,Width-2F),Math.Max(1F,Height-2F));
+            using(var path=GraphicsExtensions.CreateRoundedRectanglePath(rect,Radius))
+            using(var pen=new Pen(BorderColor,1F))
+                e.Graphics.DrawPath(pen,path);
         }
     }
     internal sealed class ThemedComboHost : Panel
     {
-        private bool focused,hover;
         private readonly ComboBox combo;
         private readonly ComboDisplayLabel selectedLabel;
         public ThemedComboHost(ComboBox combo)
         {
-            this.combo=combo; Height=40; MinimumSize=new Size(80,40); BackColor=Color.FromArgb(21,34,49); Cursor=Cursors.Hand;
-            combo.Dock=DockStyle.None; combo.Margin=Padding.Empty; Controls.Add(combo);
-            combo.ForeColor=BackColor;
-            selectedLabel=new ComboDisplayLabel { AutoEllipsis=true,TextAlign=ContentAlignment.MiddleLeft,BackColor=BackColor,ForeColor=Color.FromArgb(237,248,250),Font=combo.Font,Cursor=Cursors.Hand,Padding=new Padding(8,0,38,0) };
-            selectedLabel.Click+=delegate { combo.Focus(); combo.DroppedDown=true; }; Controls.Add(selectedLabel);
-            combo.GotFocus+=delegate { focused=true; selectedLabel.HasFocus=true; Invalidate(); }; combo.LostFocus+=delegate { focused=false; selectedLabel.HasFocus=false; Invalidate(); };
-            MouseEnter+=delegate { hover=true; selectedLabel.Hover=true; Invalidate(); }; MouseLeave+=delegate { hover=false; selectedLabel.Hover=false; Invalidate(); };
-            combo.MouseEnter+=delegate { hover=true; selectedLabel.Hover=true; Invalidate(); }; combo.MouseLeave+=delegate { hover=false; selectedLabel.Hover=false; Invalidate(); };
-            var arrow=new LucideIconControl { BackColor=BackColor,Cursor=Cursors.Hand,IconName="chevron-down",IconColor=Color.FromArgb(164,185,198),ContentSize=18,AccessibleName="Abrir lista de dispositivos" };
-            arrow.Click+=delegate { combo.Focus(); combo.DroppedDown=!combo.DroppedDown; }; Controls.Add(arrow);
+            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);
+            this.combo=combo; Height=38; MinimumSize=new Size(80,36); BackColor=Color.FromArgb(15,25,37); Cursor=Cursors.Hand;
+            combo.Dock=DockStyle.None; combo.Margin=Padding.Empty; combo.Location=new Point(0,-200); Controls.Add(combo);
+            selectedLabel=new ComboDisplayLabel { AutoEllipsis=true,TextAlign=ContentAlignment.MiddleLeft,BackColor=Color.FromArgb(15,25,37),ForeColor=Color.FromArgb(237,248,250),Font=combo.Font,Cursor=Cursors.Hand,Padding=new Padding(12,0,36,0),AccessibleName="Abrir lista de dispositivos" };
+            selectedLabel.Click+=delegate { OpenDropDownMenu(); }; Controls.Add(selectedLabel);
+            combo.GotFocus+=delegate { selectedLabel.HasFocus=true; selectedLabel.Invalidate(); }; combo.LostFocus+=delegate { selectedLabel.HasFocus=false; selectedLabel.Invalidate(); };
+            MouseEnter+=delegate { selectedLabel.Hover=true; selectedLabel.Invalidate(); }; MouseLeave+=delegate { selectedLabel.Hover=false; selectedLabel.Invalidate(); };
+            selectedLabel.MouseEnter+=delegate { selectedLabel.Hover=true; selectedLabel.Invalidate(); }; selectedLabel.MouseLeave+=delegate { selectedLabel.Hover=false; selectedLabel.Invalidate(); };
             combo.SelectedIndexChanged+=delegate { UpdateSelectedLabel(); };
             Resize+=delegate
             {
-                combo.Bounds=new Rectangle(1,1,Math.Max(80,Width-2),Height-2);
-                selectedLabel.Bounds=new Rectangle(1,1,Math.Max(30,Width-2),Height-2);
-                arrow.Bounds=new Rectangle(Math.Max(1,Width-33),1,31,Height-2);
-                selectedLabel.BringToFront(); arrow.BringToFront();
+                int w=Math.Max(80,Width),h=Math.Max(28,Height);
+                combo.Bounds=new Rectangle(0,-200,w,24);
+                selectedLabel.Bounds=new Rectangle(0,0,w,h);
             };
             UpdateSelectedLabel();
         }
+        private void OpenDropDownMenu()
+        {
+            if(combo.Items.Count==0)return;
+            selectedLabel.HasFocus=true; selectedLabel.Invalidate();
+            var menu=new ContextMenuStrip { Renderer=new ToolStripProfessionalRenderer(new DarkColorTable()),BackColor=Color.FromArgb(16,26,39),ForeColor=Color.FromArgb(237,248,250),Font=combo.Font,ShowImageMargin=false,AutoSize=true,MinimumSize=new Size(Width,0) };
+            for(int i=0;i<combo.Items.Count;i++)
+            {
+                int idx=i;
+                var choice=combo.Items[i] as AudioChoice;
+                string text=choice!=null?choice.Label:combo.Items[i].ToString();
+                var item=new ToolStripMenuItem(text) { ForeColor=idx==combo.SelectedIndex?Color.FromArgb(57,197,214):(text.StartsWith("Indisponível")||text.StartsWith("Oculto")?Color.FromArgb(255,198,109):Color.FromArgb(237,248,250)),Font=new Font(combo.Font,idx==combo.SelectedIndex?FontStyle.Bold:FontStyle.Regular),Padding=new Padding(4,4,4,4) };
+                item.Click+=delegate { combo.SelectedIndex=idx; };
+                menu.Items.Add(item);
+            }
+            menu.Closed+=delegate { selectedLabel.HasFocus=false; selectedLabel.Invalidate(); };
+            menu.Show(this,new Point(0,Height+2));
+        }
         private void UpdateSelectedLabel()
         {
-            var choice=combo.SelectedItem as AudioChoice; selectedLabel.Text=choice==null?"Selecione um dispositivo":choice.Label;
-            selectedLabel.ForeColor=choice!=null&&choice.Label.StartsWith("Indisponível")?Color.FromArgb(255,198,109):Color.FromArgb(237,248,250);
+            var choice=combo.SelectedItem as AudioChoice; selectedLabel.Text=choice==null?"Nenhum dispositivo selecionado":choice.Label;
+            selectedLabel.ForeColor=choice==null?Color.FromArgb(132,154,170):(choice.Label.StartsWith("Indisponível")||choice.Label.StartsWith("Oculto")?Color.FromArgb(255,198,109):Color.FromArgb(237,248,250));
+            selectedLabel.Invalidate();
         }
-        protected override void OnPaint(PaintEventArgs e)
+        protected override void OnPaintBackground(PaintEventArgs e)
         {
-            base.OnPaint(e); e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias; Color c=focused?Color.FromArgb(57,197,214):(hover?Color.FromArgb(85,216,230):Color.FromArgb(41,61,76));
-            using(var path=new System.Drawing.Drawing2D.GraphicsPath()) using(var pen=new Pen(c,focused?1.6F:1F)) { int r=9; path.AddArc(0,0,r,r,180,90); path.AddArc(Width-r-1,0,r,r,270,90); path.AddArc(Width-r-1,Height-r-1,r,r,0,90); path.AddArc(0,Height-r-1,r,r,90,90); path.CloseFigure(); e.Graphics.DrawPath(pen,path); }
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(this,Color.FromArgb(21,34,49)));
+        }
+    }
+    internal sealed class AudioDeviceCard : RoundedSurfacePanel
+    {
+        private readonly Control icon,title,description,selector,actions;
+        public AudioDeviceCard(Control icon,Control title,Control description,Control selector,Control actions)
+        {
+            this.icon=icon; this.title=title; this.description=description; this.selector=selector; this.actions=actions;
+            BackColor=Color.FromArgb(21,34,49); BorderColor=Color.FromArgb(41,61,76); Radius=12;
+            Controls.Add(icon); Controls.Add(title); Controls.Add(description); Controls.Add(selector); Controls.Add(actions);
+            Resize+=delegate { LayoutCard(); }; LayoutCard();
+        }
+        private void LayoutCard()
+        {
+            int dpi=96; if(IsHandleCreated)using(Graphics g=CreateGraphics())dpi=Math.Max(96,(int)Math.Round(g.DpiX));
+            int padX=UiSpacing.Scale(16,dpi),topY=UiSpacing.Scale(12,dpi);
+            int iconSize=UiSpacing.Scale(36,dpi),titleH=UiSpacing.Scale(22,dpi),descH=UiSpacing.Scale(18,dpi),headerH=titleH+descH;
+            int selectorHeight=UiSpacing.Scale(38,dpi),actionHeight=UiSpacing.Scale(34,dpi);
+            int width=Math.Max(0,ClientSize.Width-padX*2);
+            int textGap=UiSpacing.Scale(10,dpi),textX=padX+iconSize+textGap,textWidth=Math.Max(0,width-iconSize-textGap);
+            icon.SetBounds(padX,topY+(headerH-iconSize)/2,iconSize,iconSize);
+            title.SetBounds(textX,topY,textWidth,titleH);
+            description.SetBounds(textX,topY+titleH,textWidth,descH);
+            int selectorY=topY+headerH+UiSpacing.Scale(6,dpi);
+            selector.SetBounds(padX,selectorY,width,selectorHeight);
+            int actionsY=selectorY+selectorHeight+UiSpacing.Scale(8,dpi);
+            actions.SetBounds(padX,actionsY,width,actionHeight);
         }
     }
     internal sealed class ComboDisplayLabel : Label
     {
         public bool HasFocus,Hover;
-        protected override void OnPaintBackground(PaintEventArgs e) { using(var b=new SolidBrush(BackColor)) e.Graphics.FillRectangle(b,ClientRectangle); }
+        public ComboDisplayLabel()
+        {
+            SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);
+        }
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(Parent??(Control)this,Color.FromArgb(21,34,49)));
+        }
         protected override void OnPaint(PaintEventArgs e)
         {
+            e.Graphics.Clear(GraphicsExtensions.ResolveParentBackColor(Parent??(Control)this,Color.FromArgb(21,34,49)));
             e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            e.Graphics.PixelOffsetMode=System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+            var rect=new RectangleF(0.5F,0.5F,Math.Max(1F,Width-2F),Math.Max(1F,Height-2F));
+            Color fill=Hover?Color.FromArgb(19,31,45):BackColor;
+            Color border=HasFocus?Color.FromArgb(57,197,214):(Hover?Color.FromArgb(72,112,135):Color.FromArgb(41,61,76));
+            using(var path=GraphicsExtensions.CreateRoundedRectanglePath(rect,8F))
+            using(var brush=new SolidBrush(fill))
+            using(var pen=new Pen(border,HasFocus?1.5F:1F))
+            {
+                e.Graphics.FillPath(brush,path);
+                e.Graphics.DrawPath(pen,path);
+            }
             var textBounds=new Rectangle(Padding.Left,0,Math.Max(0,Width-Padding.Left-Padding.Right),Height);
             TextRenderer.DrawText(e.Graphics,Text,Font,textBounds,ForeColor,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.SingleLine|TextFormatFlags.NoPrefix);
-            Color border=HasFocus?Color.FromArgb(57,197,214):(Hover?Color.FromArgb(85,216,230):Color.FromArgb(41,61,76));
-            using(var path=new System.Drawing.Drawing2D.GraphicsPath()) using(var pen=new Pen(border,HasFocus?1.6F:1F))
-            { int r=8; path.AddArc(0,0,r,r,180,90); path.AddArc(Width-r-1,0,r,r,270,90); path.AddArc(Width-r-1,Height-r-1,r,r,0,90); path.AddArc(0,Height-r-1,r,r,90,90); path.CloseFigure(); e.Graphics.DrawPath(pen,path); }
+            int iconSize=Math.Max(14,(int)Math.Round(16*e.Graphics.DpiX/96F));
+            var iconBounds=new Rectangle(Math.Max(4,Width-iconSize-12),(Height-iconSize)/2,iconSize,iconSize);
+            IconResources.Draw(e.Graphics,"chevron-down",iconBounds,HasFocus||Hover?Color.FromArgb(57,197,214):Color.FromArgb(164,185,198));
         }
     }
     internal sealed class DarkColorTable : ProfessionalColorTable
@@ -908,7 +1236,6 @@ namespace WolfHubAudio
         private readonly string preferenceFile;
         private bool allowExit;
         private bool previewMode;
-        [DllImport("dwmapi.dll", PreserveSig=true)] private static extern int DwmSetWindowAttribute(IntPtr hwnd,int attribute,ref int value,int valueSize);
         private readonly System.Windows.Forms.Timer refreshTimer = new System.Windows.Forms.Timer();
         private readonly System.Windows.Forms.Timer clickTimer = new System.Windows.Forms.Timer();
         private readonly ComboBox primaryCombo = new ComboBox();
@@ -918,7 +1245,6 @@ namespace WolfHubAudio
         private readonly Label recordingMeterLabel = new Label();
         private readonly System.Windows.Forms.Timer recordingMeterTimer = new System.Windows.Forms.Timer();
         private RoundedButton recordingPrivacyButton;
-        private RoundedButton recordingMainButton;
         private RecordingLevelMonitor recordingMonitor;
         private float recordingPeak;
         private string recordingMonitorError;
@@ -930,12 +1256,15 @@ namespace WolfHubAudio
         private bool loadingUi;
         private RoundedButton profileSaveButton;
         private Label statusLabel;
-        private Label profileTitle, activeBadge, deviceCountLabel, settingsStatusLabel;
+        private Label profileTitle, deviceCountLabel, settingsStatusLabel;
+        private StatusBadgeControl activeBadge;
         private AudioStatusIndicator audioHeaderState;
-        private FlowLayoutPanel profileList;
-        private Panel homePanel, settingsPanel, profileSidebar, mainRightHost;
-        private TableLayoutPanel rootLayout, homeLayout, outputCards;
+        private Panel profileList;
+        private Panel homePanel, settingsPanel, profileSidebar, mainRightHost, cardsViewport, profileHeaderPanel, footerPanel;
+        private TableLayoutPanel settingsLayout;
         private Control primaryCard, secondaryCard, recordingCard;
+        private RoundedButton renameButton, moreButton;
+        private Action relayoutMainWindow;
         private string displayedProfileId="";
         private string baselinePrimaryId="",baselineSecondaryId="",baselineRecordingId="";
         private readonly ToolTip tips=new ToolTip();
@@ -944,7 +1273,7 @@ namespace WolfHubAudio
         public MainForm(string[] args)
         {
             previewMode=args.Contains("--ui-preview");
-            Text = "WolfHub Audio Switcher"; Width = 1080; Height = 640; MinimumSize = new Size(820, 620);
+            Text = "WolfHub Audio"; Width = 860; Height = 762; MinimumSize = new Size(760, 680);
             StartPosition = FormStartPosition.CenterScreen;
             preferenceFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WolfHubAudio", "settings.xml");
             preferences = LoadPreferences(preferenceFile);
@@ -961,42 +1290,80 @@ namespace WolfHubAudio
 
         private void BuildUi()
         {
+            AutoScaleMode=AutoScaleMode.Dpi; AutoScaleDimensions=new SizeF(96F,96F);
             BackColor=Color.FromArgb(11,17,27); ForeColor=Color.FromArgb(237,248,250); Font=new Font("Segoe UI",9F);
-            Text="WolfHub Audio"; Width=1080; Height=640; MinimumSize=new Size(820,620);
-            var root=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=2,Padding=new Padding(14,10,14,12),BackColor=BackColor };
-            rootLayout=root;
-            root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,218)); root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute,72)); root.RowStyles.Add(new RowStyle(SizeType.Percent,100));
-            var header=new Panel { Dock=DockStyle.Fill };
-            header.Controls.Add(new Label { Text="WolfHub Audio",Left=4,Top=6,AutoSize=true,Font=new Font("Segoe UI",16F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250) });
-            header.Controls.Add(new Label { Text="Gerenciador de dispositivos de áudio",Left=6,Top=38,AutoSize=true,Font=new Font("Segoe UI",9.5F),ForeColor=Color.FromArgb(164,185,198) });
-            audioHeaderState=new AudioStatusIndicator { CurrentText="",AutoSize=false,ForeColor=Color.FromArgb(164,185,198),Font=new Font("Segoe UI",9F),Anchor=AnchorStyles.Top|AnchorStyles.Right,Top=17,Width=260,Height=34 };
-            var settingsNav=CreateButton("Configurações",delegate { ShowSettings(true); }); settingsNav.Glyph=ButtonGlyph.Settings2; settingsNav.Width=152; settingsNav.Height=38; settingsNav.Anchor=AnchorStyles.Top|AnchorStyles.Right; settingsNav.Top=15;
-            header.Controls.Add(settingsNav); header.Controls.Add(audioHeaderState);
-            Action layoutHeader=delegate
-            {
-                settingsNav.Left=header.ClientSize.Width-settingsNav.Width;
-                int right=settingsNav.Left-12; int statusWidth=Math.Min(320,Math.Max(0,right-300));
-                audioHeaderState.Width=statusWidth; audioHeaderState.Left=Math.Max(278,right-statusWidth);
-            };
-            header.Resize+=delegate { layoutHeader(); }; layoutHeader();
-            root.Controls.Add(header,0,0); root.SetColumnSpan(header,2);
+            Text="WolfHub Audio"; ClientSize=new Size(860,724); MinimumSize=new Size(760,680);
+            var root=new Panel { Dock=DockStyle.Fill,BackColor=BackColor,Padding=Padding.Empty,Margin=Padding.Empty };
+            var header=new Panel { BackColor=BackColor,Padding=Padding.Empty,Margin=Padding.Empty };
+            var brandTitle=new Label { Text="WolfHub Audio",Font=new Font("Segoe UI",16F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250),TextAlign=ContentAlignment.MiddleLeft,Margin=Padding.Empty };
+            var brandSubtitle=new Label { Text="Gerenciador de dispositivos de áudio",Font=new Font("Segoe UI",9.25F),ForeColor=Color.FromArgb(164,185,198),TextAlign=ContentAlignment.MiddleLeft,Margin=Padding.Empty };
+            header.Controls.Add(brandTitle); header.Controls.Add(brandSubtitle);
+            audioHeaderState=new AudioStatusIndicator { CurrentText="",ForeColor=Color.FromArgb(164,185,198),Font=new Font("Segoe UI",9F),Margin=Padding.Empty };
+            var settingsNav=CreateButton("Configurações",delegate { ShowSettings(true); }); settingsNav.Glyph=ButtonGlyph.Settings2; settingsNav.Width=152; settingsNav.Height=36; settingsNav.Margin=Padding.Empty;
+            header.Controls.Add(audioHeaderState); header.Controls.Add(settingsNav);
 
-            var sidebar=CreateSurfacePanel(); profileSidebar=sidebar; sidebar.BackColor=Color.FromArgb(16,26,39); sidebar.Dock=DockStyle.Fill; sidebar.Padding=new Padding(10); sidebar.Margin=new Padding(0,2,12,0);
-            var sideLayout=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=1,RowCount=3,BackColor=sidebar.BackColor };
-            sideLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,36)); sideLayout.RowStyles.Add(new RowStyle(SizeType.Percent,100)); sideLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,42));
-            sideLayout.Controls.Add(new Label { Text="Perfis",Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft,ForeColor=Color.FromArgb(164,185,198),Font=new Font("Segoe UI",10F,FontStyle.Bold) },0,0);
-            profileList=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true,BackColor=sidebar.BackColor,Padding=new Padding(0,2,2,2) }; sideLayout.Controls.Add(profileList,0,1);
-            var newProfileButton=CreateButton("Novo perfil",NewProfile); newProfileButton.Dock=DockStyle.Fill; newProfileButton.Primary=true; newProfileButton.Glyph=ButtonGlyph.Plus; newProfileButton.Height=38; sideLayout.Controls.Add(newProfileButton,0,2);
-            sidebar.Controls.Add(sideLayout); root.Controls.Add(sidebar,0,1);
+            profileSidebar=CreateSurfacePanel(); profileSidebar.BackColor=Color.FromArgb(16,26,39); profileSidebar.Padding=new Padding(UiSpacing.Scale(this,12));
+            var profilesHeader=new Panel { BackColor=profileSidebar.BackColor,Margin=Padding.Empty,Padding=Padding.Empty };
+            profilesHeader.Controls.Add(new Label { Text="Perfis",Font=new Font("Segoe UI",15F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250),TextAlign=ContentAlignment.MiddleLeft,Margin=Padding.Empty });
+            var addProfileButton=CreateButton("",NewProfile); addProfileButton.Primary=true; addProfileButton.Glyph=ButtonGlyph.Plus; addProfileButton.AccessibleName="Novo perfil"; addProfileButton.AccessibleDescription="Criar um novo perfil de áudio"; tips.SetToolTip(addProfileButton,"Novo perfil"); profilesHeader.Controls.Add(addProfileButton);
+            profileList=new Panel { AutoScroll=false,BackColor=profileSidebar.BackColor,Padding=Padding.Empty,Margin=Padding.Empty };
+            profileList.Resize+=delegate { LayoutProfileEntries(); };
+            profileSidebar.Controls.Add(profileList); profileSidebar.Controls.Add(profilesHeader);
 
-            var rightHost=new Panel { Dock=DockStyle.Fill,BackColor=BackColor,Margin=new Padding(0,2,0,0) }; mainRightHost=rightHost;
-            homePanel=new Panel { Dock=DockStyle.Fill,BackColor=BackColor,AutoScroll=true };
-            settingsPanel=new Panel { Dock=DockStyle.Fill,BackColor=BackColor,Visible=false };
-            BuildHomePanel(); BuildSettingsPanel(); rightHost.Controls.Add(homePanel); rightHost.Controls.Add(settingsPanel); root.Controls.Add(rightHost,1,1); Controls.Add(root);
-            homePanel.Resize+=delegate { UpdateResponsiveLayout(); };
+            mainRightHost=new Panel { BackColor=BackColor,Padding=Padding.Empty,Margin=Padding.Empty };
+            homePanel=new Panel { BackColor=BackColor,Padding=Padding.Empty,Margin=Padding.Empty };
+            settingsPanel=new Panel { BackColor=BackColor,Visible=false,Padding=Padding.Empty,Margin=Padding.Empty };
+            mainRightHost.Controls.Add(homePanel); mainRightHost.Controls.Add(settingsPanel);
+            root.Controls.Add(header); root.Controls.Add(profileSidebar); root.Controls.Add(mainRightHost); Controls.Add(root);
+            BuildHomePanel(); BuildSettingsPanel();
+            relayoutMainWindow=delegate { LayoutMainWindow(root,header,brandTitle,brandSubtitle,settingsNav,profilesHeader); };
+            root.Resize+=delegate { relayoutMainWindow(); };
+            homePanel.Resize+=delegate { LayoutHomePanel(); };
+            cardsViewport.Resize+=delegate { LayoutCards(); };
+            Shown+=delegate { relayoutMainWindow(); };
             RefreshProfileList();
             FormClosing += delegate(object s, FormClosingEventArgs e) { if (!allowExit&&!previewMode) { e.Cancel=true; Hide(); tray.ShowBalloonTip(1200,"WolfHub Audio","O aplicativo continua na bandeja do sistema.",ToolTipIcon.Info); } };
+        }
+        private void LayoutMainWindow(Control root,Control header,Control brandTitle,Control brandSubtitle,Control settingsNav,Control profilesHeader)
+        {
+            if(root==null||header==null)return;
+            int pad=UiSpacing.Scale(root,HomeLayoutGeometry.WindowPadding),gap=UiSpacing.Scale(root,HomeLayoutGeometry.SidebarColumnGap);
+            int headerHeight=UiSpacing.Scale(root,HomeLayoutGeometry.AppHeaderHeight),sideWidth=UiSpacing.Scale(root,HomeLayoutGeometry.ProfileSidebarWidth);
+            int width=Math.Max(0,root.ClientSize.Width-pad*2),height=Math.Max(0,root.ClientSize.Height-pad*2);
+            header.SetBounds(pad,pad,width,headerHeight);
+            int settingsWidth=UiSpacing.Scale(header,152),buttonHeight=UiSpacing.Scale(header,36);
+            int buttonTop=Math.Max(0,(headerHeight-buttonHeight)/2);
+            int minBrandWidth=UiSpacing.Scale(header,240);
+            int statusMax=Math.Max(0,width-minBrandWidth-settingsWidth-UiSpacing.Scale(header,20));
+            int statusWidth=Math.Min(UiSpacing.Scale(header,370),statusMax);
+            int brandWidth=Math.Max(0,width-settingsWidth-statusWidth-UiSpacing.Scale(header,20));
+            brandTitle.SetBounds(0,UiSpacing.Scale(header,6),brandWidth,UiSpacing.Scale(header,30));
+            brandSubtitle.SetBounds(0,UiSpacing.Scale(header,36),brandWidth,UiSpacing.Scale(header,22));
+            settingsNav.SetBounds(Math.Max(0,width-settingsWidth),buttonTop,settingsWidth,buttonHeight);
+            audioHeaderState.SetBounds(Math.Max(0,settingsNav.Left-UiSpacing.Scale(header,10)-statusWidth),buttonTop,statusWidth,buttonHeight);
+            int bodyY=pad+headerHeight+gap,bodyHeight=Math.Max(0,height-headerHeight-gap),mainX,mainWidth;
+            bool showSidebar=!settingsPanel.Visible; profileSidebar.Visible=showSidebar;
+            if(showSidebar)
+            {
+                profileSidebar.SetBounds(pad,bodyY,sideWidth,bodyHeight); mainX=pad+sideWidth+gap; mainWidth=Math.Max(0,width-sideWidth-gap);
+                int sidePad=UiSpacing.Scale(profileSidebar,12);
+                int innerW=Math.Max(0,profileSidebar.ClientSize.Width-sidePad*2);
+                int headerH=UiSpacing.Scale(profileSidebar,44);
+                profilesHeader.SetBounds(sidePad,UiSpacing.Scale(profileSidebar,8),innerW,headerH);
+                int buttonSize=UiSpacing.Scale(profilesHeader,32);
+                var title=profilesHeader.Controls[0];
+                title.SetBounds(0,0,Math.Max(0,innerW-buttonSize-UiSpacing.Scale(profilesHeader,8)),headerH);
+                Rectangle addBounds=HomeLayoutGeometry.ProfileAddButtonBounds(profilesHeader.ClientSize,buttonSize,0);
+                profilesHeader.Controls[1].SetBounds(addBounds.X,addBounds.Y,addBounds.Width,addBounds.Height);
+                int listTop=profilesHeader.Bottom+UiSpacing.Scale(profileSidebar,6);
+                profileList.SetBounds(sidePad,listTop,innerW,Math.Max(0,profileSidebar.ClientSize.Height-listTop-sidePad));
+                LayoutProfileEntries();
+            }
+            else { profileSidebar.SetBounds(0,0,0,0); mainX=pad; mainWidth=width; }
+            mainRightHost.SetBounds(mainX,bodyY,mainWidth,bodyHeight);
+            homePanel.SetBounds(0,0,mainRightHost.ClientSize.Width,mainRightHost.ClientSize.Height);
+            settingsPanel.SetBounds(0,0,mainRightHost.ClientSize.Width,mainRightHost.ClientSize.Height);
+            LayoutHomePanel(); UpdateSettingsLayoutWidth();
         }
         private Panel CreateSurfacePanel()
         {
@@ -1004,84 +1371,135 @@ namespace WolfHubAudio
         }
         private void BuildHomePanel()
         {
-            homeLayout=new TableLayoutPanel { Dock=DockStyle.Top,ColumnCount=1,RowCount=4,Padding=new Padding(2,2,2,8),BackColor=BackColor,AutoSize=false,Height=474 };
-            homeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,56)); homeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,170)); homeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,170)); homeLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,66));
-            var top=new Panel { Dock=DockStyle.Fill };
-            profileTitle=new Label { Text="Perfil",Left=0,Top=0,Width=190,Height=34,AutoEllipsis=true,Font=new Font("Segoe UI",20F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250) }; top.Controls.Add(profileTitle);
-            var rename=CreateButton("Editar",RenameProfile); rename.Glyph=ButtonGlyph.Pencil; rename.SetBounds(200,2,91,34); tips.SetToolTip(rename,"Renomear perfil selecionado"); top.Controls.Add(rename);
-            var more=CreateButton("Mais",ShowProfileMenu); more.Glyph=ButtonGlyph.More; more.SetBounds(297,2,82,34); tips.SetToolTip(more,"Renomear ou excluir este perfil"); top.Controls.Add(more);
-            activeBadge=new Label { Text="Ativo no Windows",AutoSize=true,BackColor=Color.FromArgb(20,53,49),ForeColor=Color.FromArgb(84,214,160),Padding=new Padding(10,6,10,6),Anchor=AnchorStyles.Top|AnchorStyles.Right,Top=4,Font=new Font("Segoe UI",9F) }; top.Controls.Add(activeBadge);
-            top.Resize+=delegate { activeBadge.Left=top.ClientSize.Width-activeBadge.Width-2; };
-            homeLayout.Controls.Add(top,0,0);
-            outputCards=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=2,RowCount=1,BackColor=BackColor,Margin=new Padding(0) };
-            outputCards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,50)); outputCards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,50)); outputCards.RowStyles.Add(new RowStyle(SizeType.Percent,100));
+            profileHeaderPanel=new Panel { BackColor=BackColor,Margin=Padding.Empty,Padding=Padding.Empty };
+            profileTitle=new Label { Text="Perfil",AutoEllipsis=true,Font=new Font("Segoe UI",18F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250),TextAlign=ContentAlignment.MiddleLeft,Margin=Padding.Empty };
+            renameButton=CreateButton("Editar",RenameProfile); renameButton.Glyph=ButtonGlyph.Pencil; tips.SetToolTip(renameButton,"Renomear perfil selecionado");
+            moreButton=CreateButton("Mais",ShowProfileMenu); moreButton.Glyph=ButtonGlyph.More; tips.SetToolTip(moreButton,"Renomear ou excluir este perfil");
+            activeBadge=new StatusBadgeControl { Text="Ativo no Windows",IsActive=true,Font=new Font("Segoe UI",9F,FontStyle.Bold),Margin=Padding.Empty };
+            profileHeaderPanel.Controls.Add(profileTitle); profileHeaderPanel.Controls.Add(renameButton); profileHeaderPanel.Controls.Add(moreButton); profileHeaderPanel.Controls.Add(activeBadge);
             primaryCard=CreateDeviceCard("volume-2","Saída principal","Dispositivo usado ao ativar o perfil.",primaryCombo,"Definir principal",ActivatePrimary,true,delegate { TestCombo(primaryCombo); });
             secondaryCard=CreateDeviceCard("speaker","Saída secundária","Alternativa para troca rápida; não ativa o Windows.",secondaryCombo,null,null,true,delegate { TestCombo(secondaryCombo); });
-            outputCards.Controls.Add(primaryCard,0,0); outputCards.Controls.Add(secondaryCard,1,0); homeLayout.Controls.Add(outputCards,0,1);
-            recordingCard=CreateDeviceCard("mic","Dispositivo de gravação","Microfone utilizado ao ativar o perfil.",recordingCombo,"Definir gravação",ActivateRecording,false,null); homeLayout.Controls.Add(recordingCard,0,2);
-            var footer=CreateSurfacePanel(); footer.BackColor=Color.FromArgb(16,26,39); footer.Dock=DockStyle.Fill; footer.Margin=new Padding(0,5,0,0);
-            deviceCountLabel=new Label { Text="",ForeColor=Color.FromArgb(164,185,198),Font=new Font("Segoe UI",10F),TextAlign=ContentAlignment.MiddleLeft,AutoEllipsis=true };
-            statusLabel=new Label { Text="Perfil pronto para editar.",ForeColor=Color.FromArgb(120,142,158),Font=new Font("Segoe UI",9F),TextAlign=ContentAlignment.MiddleLeft,AutoEllipsis=true };
-            profileSaveButton=CreateButton("Salvar alterações",SaveCurrentProfile); profileSaveButton.Primary=true; profileSaveButton.Glyph=ButtonGlyph.Save; profileSaveButton.Width=176; profileSaveButton.Height=38; profileSaveButton.Enabled=false;
-            footer.Controls.AddRange(new Control[]{deviceCountLabel,statusLabel,profileSaveButton});
-            footer.Resize+=delegate { profileSaveButton.SetBounds(Math.Max(14,footer.ClientSize.Width-190),14,176,38); deviceCountLabel.SetBounds(14,8,Math.Max(130,footer.ClientSize.Width-216),21); statusLabel.SetBounds(14,31,Math.Max(130,footer.ClientSize.Width-216),20); };
-            homeLayout.Controls.Add(footer,0,3);
-            homePanel.Controls.Add(homeLayout); UpdateResponsiveLayout();
+            recordingCard=CreateDeviceCard("mic","Dispositivo de gravação","Microfone utilizado ao ativar o perfil.",recordingCombo,"Definir gravação",ActivateRecording,false,null);
+            cardsViewport=new Panel { AutoScroll=false,BackColor=BackColor,Margin=Padding.Empty,Padding=Padding.Empty };
+            cardsViewport.Controls.Add(primaryCard); cardsViewport.Controls.Add(secondaryCard); cardsViewport.Controls.Add(recordingCard);
+            footerPanel=CreateSurfacePanel(); footerPanel.BackColor=Color.FromArgb(16,26,39); footerPanel.Padding=new Padding(UiSpacing.Scale(footerPanel,12));
+            deviceCountLabel=new Label { Text="",ForeColor=Color.FromArgb(214,232,242),Font=new Font("Segoe UI",9.25F,FontStyle.Bold),TextAlign=ContentAlignment.MiddleLeft,AutoEllipsis=true,Margin=Padding.Empty };
+            statusLabel=new Label { Text="Perfil pronto para editar.",ForeColor=Color.FromArgb(146,168,184),Font=new Font("Segoe UI",8.75F),TextAlign=ContentAlignment.MiddleLeft,AutoEllipsis=true,Margin=Padding.Empty };
+            profileSaveButton=CreateButton("Salvar alterações",SaveCurrentProfile); profileSaveButton.Primary=true; profileSaveButton.Glyph=ButtonGlyph.Save; profileSaveButton.Width=176; profileSaveButton.Height=36; profileSaveButton.Enabled=false; profileSaveButton.Margin=Padding.Empty;
+            footerPanel.Controls.Add(deviceCountLabel); footerPanel.Controls.Add(statusLabel); footerPanel.Controls.Add(profileSaveButton);
+            homePanel.Controls.Add(cardsViewport); homePanel.Controls.Add(profileHeaderPanel); homePanel.Controls.Add(footerPanel);
+        }
+        private void LayoutHomePanel()
+        {
+            if(homePanel==null||profileHeaderPanel==null||cardsViewport==null||footerPanel==null)return;
+            int head=UiSpacing.Scale(homePanel,HomeLayoutGeometry.SectionHeaderHeight),foot=UiSpacing.Scale(homePanel,HomeLayoutGeometry.FooterCellHeight),gap=UiSpacing.Scale(homePanel,HomeLayoutGeometry.CardGap),w=homePanel.ClientSize.Width,h=homePanel.ClientSize.Height;
+            profileHeaderPanel.SetBounds(0,0,w,head); footerPanel.SetBounds(0,Math.Max(0,h-foot),w,foot);
+            cardsViewport.SetBounds(0,head+gap,w,Math.Max(0,h-head-foot-gap*2));
+            int buttonH=UiSpacing.Scale(profileHeaderPanel,36),buttonY=Math.Max(0,(head-buttonH)/2);
+            int badgeW=UiSpacing.Scale(profileHeaderPanel,150),editW=UiSpacing.Scale(profileHeaderPanel,92),moreW=UiSpacing.Scale(profileHeaderPanel,84),gapW=UiSpacing.Scale(profileHeaderPanel,8);
+            activeBadge.SetBounds(Math.Max(0,w-badgeW),buttonY,badgeW,buttonH);
+            moreButton.SetBounds(Math.Max(0,activeBadge.Left-gapW-moreW),buttonY,moreW,buttonH);
+            renameButton.SetBounds(Math.Max(0,moreButton.Left-gapW-editW),buttonY,editW,buttonH);
+            int titleH=UiSpacing.Scale(profileHeaderPanel,42);
+            profileTitle.SetBounds(0,Math.Max(0,(head-titleH)/2),Math.Max(0,renameButton.Left-gapW),titleH);
+            LayoutCards(); LayoutFooter();
+        }
+        private void LayoutCards()
+        {
+            if(cardsViewport==null||primaryCard==null||recordingCard==null||secondaryCard==null)return;
+            int dpi=96;
+            if(cardsViewport.IsHandleCreated)using(Graphics g=cardsViewport.CreateGraphics())dpi=Math.Max(96,(int)Math.Round(g.DpiX));
+            int card=UiSpacing.Scale(HomeLayoutGeometry.AudioCardHeight,dpi);
+            int gap=UiSpacing.Scale(HomeLayoutGeometry.CardGap,dpi);
+            int totalHeight=card*3+gap*2;
+            bool needsVerticalScroll=cardsViewport.ClientSize.Height>0&&cardsViewport.ClientSize.Height<totalHeight;
+            if(cardsViewport.AutoScroll!=needsVerticalScroll)cardsViewport.AutoScroll=needsVerticalScroll;
+            int scrollInset=needsVerticalScroll?SystemInformation.VerticalScrollBarWidth:0;
+            int usableWidth=Math.Max(0,cardsViewport.ClientSize.Width-scrollInset);
+            Rectangle[] positions=HomeLayoutGeometry.StackedCardBounds(usableWidth,card,gap);
+            cardsViewport.SuspendLayout();
+            try
+            {
+                primaryCard.Bounds=positions[0];
+                secondaryCard.Bounds=positions[1];
+                recordingCard.Bounds=positions[2];
+                cardsViewport.AutoScrollMinSize=needsVerticalScroll?new Size(0,totalHeight):Size.Empty;
+            }
+            finally { cardsViewport.ResumeLayout(false); }
+            LayoutFooter();
+        }
+        private void LayoutFooter()
+        {
+            if(footerPanel==null||profileSaveButton==null)return;
+            int padX=UiSpacing.Scale(footerPanel,16),padY=UiSpacing.Scale(footerPanel,10);
+            int buttonW=UiSpacing.Scale(footerPanel,176),buttonH=UiSpacing.Scale(footerPanel,36);
+            int textW=Math.Max(0,footerPanel.ClientSize.Width-padX*2-buttonW-UiSpacing.Scale(footerPanel,16));
+            int topH=UiSpacing.Scale(footerPanel,22),botH=UiSpacing.Scale(footerPanel,20);
+            deviceCountLabel.SetBounds(padX,padY,textW,topH);
+            statusLabel.SetBounds(padX,padY+topH,textW,botH);
+            profileSaveButton.SetBounds(Math.Max(padX,footerPanel.ClientSize.Width-padX-buttonW),Math.Max(0,(footerPanel.ClientSize.Height-buttonH)/2),buttonW,buttonH);
         }
         private void BuildSettingsPanel()
         {
-            settingsPanel.AutoScroll=true;
-            var title=new Label { Text="Configurações globais",AutoSize=false,Font=new Font("Segoe UI",22F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250) };
-            var subtitle=new Label { Text="Preferências do WolfHub Audio, independentes do perfil selecionado.",AutoSize=false,Font=new Font("Segoe UI",10F),ForeColor=Color.FromArgb(164,185,198) };
-            settingsPanel.Controls.Add(title); settingsPanel.Controls.Add(subtitle);
+            settingsPanel.AutoScroll=true; settingsPanel.Padding=Padding.Empty;
+            settingsLayout=new TableLayoutPanel { Dock=DockStyle.Top,ColumnCount=1,RowCount=7,AutoSize=true,AutoSizeMode=AutoSizeMode.GrowAndShrink,BackColor=BackColor,Padding=Padding.Empty,Margin=Padding.Empty };
+            settingsLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
+            for(int row=0;row<7;row++)settingsLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            var title=new Label { Text="Configurações globais",Dock=DockStyle.Fill,Font=new Font("Segoe UI",18F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250),Height=34,TextAlign=ContentAlignment.MiddleLeft,Margin=Padding.Empty };
+            var subtitle=new Label { Text="Preferências do WolfHub Audio, independentes do perfil selecionado.",Dock=DockStyle.Fill,Font=new Font("Segoe UI",9.5F),ForeColor=Color.FromArgb(164,185,198),Height=26,TextAlign=ContentAlignment.MiddleLeft,Margin=new Padding(0,0,0,UiSpacing.ContainerGap) };
+            settingsLayout.Controls.Add(title,0,0); settingsLayout.Controls.Add(subtitle,0,1);
 
-            var devices=CreateSettingsSection("Dispositivos","Apelidos e visibilidade são aplicados globalmente.",148);
-            var aliases=CreateButton("Gerenciar apelidos",RenameSelected); aliases.Glyph=ButtonGlyph.Pencil; aliases.Width=190; aliases.Height=38;
-            var visibility=CreateButton("Gerenciar visibilidade",ShowDeviceVisibility); visibility.Glyph=ButtonGlyph.Eye; visibility.Width=210; visibility.Height=38;
-            devices.Controls.Add(aliases); devices.Controls.Add(visibility);
+            FlowLayoutPanel deviceActions;
+            var devices=CreateSettingsSection("Dispositivos","Apelidos e visibilidade são aplicados globalmente.",132,out deviceActions);
+            devices.Margin=new Padding(0,0,0,UiSpacing.ContainerGap);
+            var aliases=CreateButton("Gerenciar apelidos",RenameSelected); aliases.Glyph=ButtonGlyph.Pencil; aliases.Width=190; aliases.Height=36; aliases.Margin=new Padding(0,0,UiSpacing.ElementGap,0);
+            var visibility=CreateButton("Gerenciar visibilidade",ShowDeviceVisibility); visibility.Glyph=ButtonGlyph.Eye; visibility.Width=210; visibility.Height=36; visibility.Margin=Padding.Empty;
+            deviceActions.Controls.AddRange(new Control[]{aliases,visibility}); settingsLayout.Controls.Add(devices,0,2);
 
-            var startup=CreateSettingsSection("Inicialização","Inicie o WolfHub Audio automaticamente ao entrar no Windows.",112);
-            autoStartCheck.Text="Iniciar com o Windows"; autoStartCheck.AutoSize=true; autoStartCheck.ForeColor=Color.FromArgb(237,248,250); autoStartCheck.BackColor=startup.BackColor; autoStartCheck.FlatStyle=FlatStyle.Flat; autoStartCheck.UseVisualStyleBackColor=false; autoStartCheck.Checked=preferences.AutoStart;
+            FlowLayoutPanel startupActions;
+            var startup=CreateSettingsSection("Inicialização","Inicie o WolfHub Audio automaticamente ao entrar no Windows.",124,out startupActions);
+            startup.Margin=new Padding(0,0,0,UiSpacing.ContainerGap);
+            autoStartCheck.Text="Iniciar com o Windows"; autoStartCheck.AutoSize=true; autoStartCheck.Font=new Font("Segoe UI",9.5F); autoStartCheck.ForeColor=Color.FromArgb(237,248,250); autoStartCheck.BackColor=startup.BackColor; autoStartCheck.FlatStyle=FlatStyle.Flat; autoStartCheck.UseVisualStyleBackColor=false; autoStartCheck.Checked=preferences.AutoStart; autoStartCheck.Margin=new Padding(0,4,0,0);
+            startupActions.Controls.Add(autoStartCheck); settingsLayout.Controls.Add(startup,0,3);
             autoStartCheck.CheckedChanged+=delegate { if(loadingUi)return; preferences.AutoStart=autoStartCheck.Checked; SavePreferences(); SetStatus(autoStartCheck.Checked?"Inicialização automática ativada.":"Inicialização automática desativada."); };
-            startup.Controls.Add(autoStartCheck);
 
-            var system=CreateSettingsSection("Sistema","Elevação é solicitada somente para ações que precisam dela.",112);
-            bool isAdmin=IsAdministrator();
-            system.Visible=!isAdmin;
-            var elevate=CreateButton("Reiniciar como administrador",RestartElevated); elevate.Glyph=ButtonGlyph.ShieldCheck; elevate.Width=250; elevate.Height=38; system.Controls.Add(elevate);
+            FlowLayoutPanel systemActions;
+            var system=CreateSettingsSection("Sistema","Elevação é solicitada somente para ações que precisam dela.",132,out systemActions);
+            system.Margin=new Padding(0,0,0,UiSpacing.ContainerGap);
+            bool isAdmin=IsAdministrator(); system.Visible=!isAdmin;
+            var elevate=CreateButton("Reiniciar como administrador",RestartElevated); elevate.Glyph=ButtonGlyph.ShieldCheck; elevate.Width=250; elevate.Height=36; elevate.Margin=Padding.Empty; systemActions.Controls.Add(elevate); settingsLayout.Controls.Add(system,0,4);
 
-            settingsStatusLabel=new Label { Text="",ForeColor=Color.FromArgb(169,195,204),TextAlign=ContentAlignment.MiddleLeft,AutoEllipsis=true };
-            var back=CreateButton("Voltar aos perfis",delegate { ShowSettings(false); }); back.Width=180; back.Height=36;
-            settingsPanel.Controls.AddRange(new Control[]{devices,startup,system,settingsStatusLabel,back});
-            Action layout=delegate
-            {
-                int left=18, width=Math.Max(360,settingsPanel.ClientSize.Width-36-(settingsPanel.VerticalScroll.Visible?SystemInformation.VerticalScrollBarWidth:0));
-                title.SetBounds(left,16,width,36); subtitle.SetBounds(left,53,width,26);
-                devices.SetBounds(left,91,width,148); startup.SetBounds(left,251,width,112); system.SetBounds(left,375,width,112);
-                aliases.SetBounds(16,91,190,38); visibility.SetBounds(218,91,210,38);
-                autoStartCheck.SetBounds(16,68,Math.Max(200,width-32),26); elevate.SetBounds(16,68,250,38);
-                int statusTop=isAdmin?375:495;
-                settingsStatusLabel.SetBounds(left,statusTop,width,26); back.SetBounds(left,statusTop+34,180,36);
-                settingsPanel.AutoScrollMinSize=new Size(0,isAdmin?458:578);
-            };
-            settingsPanel.Resize+=delegate { layout(); }; layout();
+            settingsStatusLabel=new Label { Text="",Dock=DockStyle.Fill,Height=26,ForeColor=Color.FromArgb(169,195,204),TextAlign=ContentAlignment.MiddleLeft,AutoEllipsis=true,Margin=new Padding(0,0,0,UiSpacing.ElementGap) };
+            var back=CreateButton("Voltar aos perfis",delegate { ShowSettings(false); }); back.Width=180; back.Height=36; back.Margin=Padding.Empty;
+            settingsLayout.Controls.Add(settingsStatusLabel,0,5); settingsLayout.Controls.Add(back,0,6); settingsPanel.Controls.Add(settingsLayout);
+            settingsPanel.Resize+=delegate { UpdateSettingsLayoutWidth(); }; UpdateSettingsLayoutWidth();
         }
-        private RoundedSurfacePanel CreateSettingsSection(string title,string description,int height)
+        private RoundedSurfacePanel CreateSettingsSection(string title,string description,int height,out FlowLayoutPanel actions)
         {
-            var card=new RoundedSurfacePanel { Height=height,BackColor=Color.FromArgb(21,34,49),BorderColor=Color.FromArgb(41,61,76),Radius=12 };
-            card.Controls.Add(new Label { Text=title,Left=16,Top=12,Width=400,Height=24,Font=new Font("Segoe UI",11F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250),BackColor=card.BackColor });
-            card.Controls.Add(new Label { Text=description,Left=16,Top=38,Width=600,Height=24,Font=new Font("Segoe UI",9.5F),ForeColor=Color.FromArgb(164,185,198),BackColor=card.BackColor,AutoEllipsis=true });
+            var card=new RoundedSurfacePanel { Dock=DockStyle.Fill,Height=height,BackColor=Color.FromArgb(21,34,49),BorderColor=Color.FromArgb(41,61,76),Radius=12,Padding=UiSpacing.Inset(settingsPanel,UiSpacing.CardPadding),Margin=Padding.Empty };
+            var content=new TableLayoutPanel { Dock=DockStyle.Fill,ColumnCount=1,RowCount=4,BackColor=card.BackColor,Margin=Padding.Empty,Padding=Padding.Empty };
+            content.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
+            content.RowStyles.Add(new RowStyle(SizeType.Absolute,24));
+            content.RowStyles.Add(new RowStyle(SizeType.Absolute,22));
+            content.RowStyles.Add(new RowStyle(SizeType.Absolute,10));
+            content.RowStyles.Add(new RowStyle(SizeType.Percent,100));
+            content.Controls.Add(new Label { Text=title,Dock=DockStyle.Fill,Font=new Font("Segoe UI",11F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250),BackColor=card.BackColor,TextAlign=ContentAlignment.MiddleLeft,Margin=Padding.Empty },0,0);
+            content.Controls.Add(new Label { Text=description,Dock=DockStyle.Fill,Font=new Font("Segoe UI",9.25F),ForeColor=Color.FromArgb(164,185,198),BackColor=card.BackColor,AutoEllipsis=true,TextAlign=ContentAlignment.MiddleLeft,Margin=Padding.Empty },0,1);
+            actions=new FlowLayoutPanel { Dock=DockStyle.Fill,FlowDirection=FlowDirection.LeftToRight,WrapContents=true,BackColor=card.BackColor,Margin=Padding.Empty,Padding=Padding.Empty };
+            content.Controls.Add(actions,0,3); card.Controls.Add(content);
             return card;
+        }
+        private void UpdateSettingsLayoutWidth()
+        {
+            if(settingsLayout==null||settingsPanel==null)return;
+            int width=Math.Max(0,settingsPanel.ClientSize.Width-(settingsPanel.VerticalScroll.Visible?SystemInformation.VerticalScrollBarWidth:0));
+            settingsLayout.Width=width;
         }
         private void ShowSettings(bool show)
         {
             homePanel.Visible=!show; settingsPanel.Visible=show;
             if(profileSidebar!=null)profileSidebar.Visible=!show;
-            if(rootLayout!=null&&mainRightHost!=null)
-            {
-                rootLayout.SetColumn(mainRightHost,show?0:1);
-                rootLayout.SetColumnSpan(mainRightHost,show?2:1);
-            }
+            if(relayoutMainWindow!=null)relayoutMainWindow();
             if(show) SetStatus("Configurações globais");
         }
         private void ShowProfileMenu()
@@ -1093,100 +1511,112 @@ namespace WolfHubAudio
             menu.Renderer=new ToolStripProfessionalRenderer(new DarkColorTable()); menu.BackColor=Color.FromArgb(21,34,49); menu.ForeColor=Color.FromArgb(237,248,250); menu.Font=new Font("Segoe UI",9.5F); menu.ShowImageMargin=false;
             foreach(ToolStripItem item in menu.Items) item.ForeColor=Color.FromArgb(237,248,250);
         }
-        private Panel CreateDeviceCard(string glyph,string heading,string help,ComboBox combo,string buttonText,Action buttonAction,bool showTest,Action testAction)
+        private AudioDeviceCard CreateDeviceCard(string glyph,string heading,string help,ComboBox combo,string buttonText,Action buttonAction,bool showTest,Action testAction)
         {
-            var card=CreateSurfacePanel(); card.Dock=DockStyle.Fill; card.Margin=new Padding(4); card.Padding=Padding.Empty; card.BackColor=Color.FromArgb(21,34,49);
-            var icon=new LucideIconControl { IconName=glyph,IconColor=Color.FromArgb(57,197,214),ContentSize=24,Width=48,Height=48,Left=16,Top=14 };
-            var title=new Label { Text=heading,AutoEllipsis=true,Font=new Font("Segoe UI",12F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250),TextAlign=ContentAlignment.MiddleLeft };
-            var description=new Label { Text=help,AutoEllipsis=false,Font=new Font("Segoe UI",9.75F),ForeColor=Color.FromArgb(164,185,198),TextAlign=ContentAlignment.TopLeft,UseMnemonic=false };
+            bool hasMeter=glyph=="mic";
+            var icon=new LucideIconControl { IconName=glyph,IconColor=Color.FromArgb(57,197,214),ContentSize=20,ShowBadge=true };
+            var title=new Label { Text=heading,AutoEllipsis=true,Font=new Font("Segoe UI",11F,FontStyle.Bold),ForeColor=Color.FromArgb(237,248,250),TextAlign=ContentAlignment.MiddleLeft,Margin=Padding.Empty };
+            var description=new Label { Text=help,AutoEllipsis=true,Font=new Font("Segoe UI",9F),ForeColor=Color.FromArgb(164,185,198),TextAlign=ContentAlignment.MiddleLeft,UseMnemonic=false,Margin=Padding.Empty };
             tips.SetToolTip(description,glyph=="speaker"?help+" Selecione a saída e use Salvar alterações no rodapé; isso não a ativa no Windows.":help);
-            combo.Font=new Font("Segoe UI",10F); var comboHost=CreateThemedCombo(combo); comboHost.Height=40;
-            RoundedButton main=null;
-            if(!String.IsNullOrEmpty(buttonText)) { main=CreateButton(buttonText,buttonAction); main.Width=showTest?158:190; main.Height=36; main.MinimumSize=new Size(118,36); main.Primary=buttonText.StartsWith("Definir"); card.Controls.Add(main); }
-            RoundedButton test=null;
-            if(showTest) { test=CreateButton("Testar",testAction); test.Width=92; test.Height=36; test.MinimumSize=new Size(82,36); test.Glyph=ButtonGlyph.Play; card.Controls.Add(test); tips.SetToolTip(test,"Tocar um tom de teste nesta saída; o padrão anterior será restaurado."); }
-            card.Controls.AddRange(new Control[]{icon,title,description,comboHost});
-            if(glyph=="mic")
+            combo.Font=new Font("Segoe UI",9.75F); var comboHost=CreateThemedCombo(combo);
+            var actions=new Panel { BackColor=Color.FromArgb(21,34,49),Padding=Padding.Empty,Margin=Padding.Empty };
+            RoundedButton testBtn=null,mainBtn=null;
+            if(showTest)
             {
-                recordingCard=card;
-                recordingMeterLabel.Text="Sem sinal";
-                recordingMeterLabel.Font=new Font("Segoe UI",9F); recordingMeterLabel.ForeColor=Color.FromArgb(120,142,158); recordingMeterLabel.AutoEllipsis=true;
-                recordingMeter.BackColor=Color.FromArgb(11,17,27); recordingMeter.Height=8; recordingMeter.Paint+=delegate(object sender,PaintEventArgs e)
-                {
-                    Color track=recordingMeterDisabled?Color.FromArgb(30,42,53):Color.FromArgb(32,51,67);
-                    using(var background=new SolidBrush(track))e.Graphics.FillRectangle(background,0,0,recordingMeter.ClientSize.Width,recordingMeter.Height);
-                    int width=(int)(recordingMeter.ClientSize.Width*Math.Max(0,Math.Min(1,recordingPeak)));
-                    if(!recordingMeterDisabled&&recordingPeak>=0.005F&&width>0) using(var brush=new SolidBrush(recordingPeak>=0.85?Color.FromArgb(255,112,136):Color.FromArgb(57,197,214))) e.Graphics.FillRectangle(brush,0,0,width,recordingMeter.Height);
-                };
-                card.Controls.Add(recordingMeterLabel); card.Controls.Add(recordingMeter);
-                tips.SetToolTip(recordingMeter,"Nível instantâneo captado pelo dispositivo selecionado. O áudio não é gravado.");
-                recordingPrivacyButton=CreateButton("Abrir permissões",OpenMicrophonePrivacySettings); recordingPrivacyButton.Width=160; recordingPrivacyButton.Height=30; recordingPrivacyButton.Visible=false; recordingPrivacyButton.Glyph=ButtonGlyph.Settings2;
-                card.Controls.Add(recordingPrivacyButton); tips.SetToolTip(recordingPrivacyButton,"Abrir Privacidade e segurança > Microfone nas Configurações do Windows.");
+                testBtn=CreateButton("Testar",testAction); testBtn.Glyph=ButtonGlyph.Play; testBtn.Margin=Padding.Empty;
+                tips.SetToolTip(testBtn,"Tocar um tom de teste nesta saída; o padrão anterior será restaurado.");
+                actions.Controls.Add(testBtn);
             }
-            Action position=delegate
+            if(!String.IsNullOrEmpty(buttonText))
             {
-                int pad=16; int right=Math.Max(pad,card.ClientSize.Width-pad);
-                int iconSize=Math.Max(42,Math.Min(54,Math.Min(card.ClientSize.Height/3,card.ClientSize.Width/9)));
-                int textLeft=pad+iconSize+12; int selectorTop=14+iconSize+10;
-                icon.SetBounds(pad,14,iconSize,iconSize); title.SetBounds(textLeft,12,Math.Max(50,right-textLeft),24); description.SetBounds(textLeft,36,Math.Max(50,right-textLeft),36);
-                comboHost.SetBounds(pad,selectorTop,Math.Max(100,card.ClientSize.Width-pad*2),40);
-                if(glyph=="mic") recordingMainButton=main;
-                int actionTop=Math.Max(selectorTop+48,card.ClientSize.Height-44); int available=card.ClientSize.Width-pad*2;
-                int groupWidth=(main==null?0:main.Width)+(test==null?0:(main==null?0:8)+test.Width);
-                if(groupWidth>available)
+                mainBtn=CreateButton(buttonText,buttonAction); mainBtn.Primary=buttonText.StartsWith("Definir"); mainBtn.Margin=Padding.Empty;
+                actions.Controls.Add(mainBtn);
+            }
+            Action layoutButtons=delegate
+            {
+                int h=Math.Max(28,actions.ClientSize.Height),right=actions.ClientSize.Width,gap=UiSpacing.Scale(actions,8);
+                if(testBtn!=null)
                 {
-                    int actionWidth=Math.Max(118,available);
-                    if(main!=null)main.SetBounds(pad,actionTop,actionWidth,36);
-                    if(test!=null)test.SetBounds(pad,actionTop+40,actionWidth,36);
+                    int tw=UiSpacing.Scale(actions,96);
+                    testBtn.SetBounds(Math.Max(0,right-tw),0,tw,h);
+                    right=testBtn.Left-gap;
                 }
-                else
+                if(mainBtn!=null)
                 {
-                    if(main==null) { if(test!=null)test.SetBounds(card.ClientSize.Width-pad-test.Width,actionTop,test.Width,36); }
-                    else { int left=card.ClientSize.Width-pad-groupWidth; main.SetBounds(left,actionTop,main.Width,36); if(test!=null)test.SetBounds(main.Right+8,actionTop,test.Width,36); }
+                    int mw=UiSpacing.Scale(actions,buttonText=="Definir gravação"?168:158);
+                    mainBtn.SetBounds(Math.Max(0,right-mw),0,mw,h);
+                    right=mainBtn.Left-gap;
                 }
-                if(glyph=="mic") PositionRecordingControls();
+                if(hasMeter&&recordingPrivacyButton!=null&&recordingPrivacyButton.Visible)
+                {
+                    int pw=UiSpacing.Scale(actions,160);
+                    recordingPrivacyButton.SetBounds(Math.Max(0,right-pw),0,pw,h);
+                }
             };
-            card.Resize+=delegate { position(); }; position(); return card;
+            actions.Resize+=delegate { layoutButtons(); };
+            Control footer=actions;
+            if(hasMeter)
+            {
+                recordingMeterLabel.Text="Sem sinal"; recordingMeterLabel.Font=new Font("Segoe UI",8.75F); recordingMeterLabel.ForeColor=Color.FromArgb(140,162,178); recordingMeterLabel.AutoEllipsis=true; recordingMeterLabel.TextAlign=ContentAlignment.MiddleLeft; recordingMeterLabel.Margin=Padding.Empty;
+                recordingMeter.BackColor=Color.FromArgb(21,34,49); recordingMeter.Margin=Padding.Empty;
+                typeof(Control).InvokeMember("DoubleBuffered",System.Reflection.BindingFlags.SetProperty|System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic,null,recordingMeter,new object[]{true});
+                recordingMeter.Paint+=delegate(object sender,PaintEventArgs e)
+                {
+                    e.Graphics.Clear(Color.FromArgb(21,34,49));
+                    e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    int mw=recordingMeter.ClientSize.Width,mh=recordingMeter.ClientSize.Height;
+                    if(mw<=2||mh<=2)return;
+                    Color track=recordingMeterDisabled?Color.FromArgb(25,36,48):Color.FromArgb(14,23,34);
+                    using(var trackBrush=new SolidBrush(track))
+                        e.Graphics.FillRoundedRectangle(trackBrush,new Rectangle(0,0,mw-1,mh-1),mh/2);
+                    int fillWidth=(int)Math.Round((mw-1)*Math.Max(0F,Math.Min(1F,recordingPeak)));
+                    if(!recordingMeterDisabled&&recordingPeak>=0.005F&&fillWidth>2)
+                    {
+                        Color barColor=recordingPeak>=0.85F?Color.FromArgb(255,112,136):Color.FromArgb(57,197,214);
+                        using(var barBrush=new SolidBrush(barColor))
+                            e.Graphics.FillRoundedRectangle(barBrush,new Rectangle(0,0,Math.Max(mh,fillWidth),mh-1),mh/2);
+                    }
+                };
+                tips.SetToolTip(recordingMeter,"Nível instantâneo captado pelo dispositivo selecionado. O áudio não é gravado.");
+                recordingPrivacyButton=CreateButton("Abrir permissões",OpenMicrophonePrivacySettings); recordingPrivacyButton.Visible=false; recordingPrivacyButton.Glyph=ButtonGlyph.Settings2; recordingPrivacyButton.Margin=Padding.Empty; actions.Controls.Add(recordingPrivacyButton); tips.SetToolTip(recordingPrivacyButton,"Abrir Privacidade e segurança > Microfone nas Configurações do Windows.");
+                var recordingFooter=new Panel { BackColor=Color.FromArgb(21,34,49),Padding=Padding.Empty,Margin=Padding.Empty };
+                recordingFooter.Controls.Add(recordingMeterLabel); recordingFooter.Controls.Add(recordingMeter); recordingFooter.Controls.Add(actions);
+                recordingFooter.Resize+=delegate
+                {
+                    int h=recordingFooter.ClientSize.Height,w=recordingFooter.ClientSize.Width;
+                    int actionWidth=UiSpacing.Scale(recordingFooter,recordingPrivacyButton.Visible?336:168);
+                    actions.SetBounds(Math.Max(0,w-actionWidth),0,Math.Min(w,actionWidth),h);
+                    layoutButtons();
+                    int meterWidth=Math.Max(0,actions.Left-UiSpacing.Scale(recordingFooter,14));
+                    int labelH=UiSpacing.Scale(recordingFooter,18),barH=UiSpacing.Scale(recordingFooter,8);
+                    recordingMeterLabel.SetBounds(0,UiSpacing.Scale(recordingFooter,2),meterWidth,labelH);
+                    recordingMeter.SetBounds(0,UiSpacing.Scale(recordingFooter,22),meterWidth,barH);
+                    recordingMeter.Invalidate();
+                };
+                footer=recordingFooter;
+            }
+            return new AudioDeviceCard(icon,title,description,comboHost,footer) { Height=UiSpacing.Scale(this,HomeLayoutGeometry.AudioCardHeight) };
         }
         private RoundedButton CreateButton(string text,Action action)
         {
-            var b=new RoundedButton { Text=text,AutoSize=false,Height=36,Width=112,Margin=new Padding(3),Font=new Font("Segoe UI",9.5F),ForeColor=Color.FromArgb(237,248,250),BackColor=Color.FromArgb(28,45,61) };
+            var b=new RoundedButton { Text=text,AutoSize=false,Height=36,Width=112,Margin=new Padding(3),Font=new Font("Segoe UI",9.25F,FontStyle.Regular),ForeColor=Color.FromArgb(237,248,250),BackColor=Color.FromArgb(28,45,61) };
             b.Click+=delegate { action(); }; return b;
         }
         private void AddButton(TableLayoutPanel panel,string text,int row,int column,Action action) { panel.Controls.Add(CreateButton(text,action),column,row); }
         private ThemedComboHost CreateThemedCombo(ComboBox combo)
         {
-            combo.Dock=DockStyle.None; combo.DropDownStyle=ComboBoxStyle.DropDownList; combo.BackColor=Color.FromArgb(21,34,49); combo.ForeColor=Color.FromArgb(237,248,250); combo.FlatStyle=FlatStyle.Flat; combo.IntegralHeight=false; combo.DrawMode=DrawMode.OwnerDrawFixed; combo.ItemHeight=26; combo.MaxDropDownItems=9;
+            combo.Dock=DockStyle.None; combo.DropDownStyle=ComboBoxStyle.DropDownList; combo.BackColor=Color.FromArgb(21,34,49); combo.ForeColor=Color.FromArgb(237,248,250); combo.FlatStyle=FlatStyle.Flat; combo.IntegralHeight=false; combo.DrawMode=DrawMode.OwnerDrawFixed; combo.ItemHeight=28; combo.MaxDropDownItems=9;
             combo.DrawItem+=delegate(object sender,DrawItemEventArgs e)
             {
                 var choice=e.Index>=0?(combo.Items[e.Index] as AudioChoice):(combo.SelectedItem as AudioChoice); if(choice==null||e.Bounds.Width<=0||e.Bounds.Height<=0)return;
                 bool selected=e.Index>=0&&(e.State&DrawItemState.Selected)!=0;
-                using(var brush=new SolidBrush(selected?Color.FromArgb(37,71,83):combo.BackColor)) e.Graphics.FillRectangle(brush,e.Bounds);
-                var textBounds=Rectangle.Inflate(e.Bounds,-7,0); if(e.Index<0)textBounds.Width=Math.Max(0,textBounds.Width-35);
-                Color itemText=choice.Label.StartsWith("Indisponível")?Color.FromArgb(255,198,109):(selected?Color.FromArgb(57,197,214):Color.FromArgb(237,248,250));
+                using(var brush=new SolidBrush(selected?Color.FromArgb(32,64,78):Color.FromArgb(16,26,39))) e.Graphics.FillRectangle(brush,e.Bounds);
+                var textBounds=Rectangle.Inflate(e.Bounds,-10,0); if(e.Index<0)textBounds.Width=Math.Max(0,textBounds.Width-35);
+                Color itemText=choice.Label.StartsWith("Indisponível")||choice.Label.StartsWith("Oculto")?Color.FromArgb(255,198,109):(selected?Color.FromArgb(85,216,230):Color.FromArgb(237,248,250));
                 TextRenderer.DrawText(e.Graphics,choice.Label,combo.Font,textBounds,itemText,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
             };
             combo.SelectedIndexChanged+=delegate { var choice=combo.SelectedItem as AudioChoice; if(choice!=null)tips.SetToolTip(combo,choice.Label); UpdateDirtyState(); };
             return new ThemedComboHost(combo);
-        }
-        private void UpdateResponsiveLayout()
-        {
-            if(homePanel==null||homeLayout==null||outputCards==null)return;
-            int available=Math.Max(360,homePanel.ClientSize.Width-(homePanel.VerticalScroll.Visible?SystemInformation.VerticalScrollBarWidth:0));
-            homeLayout.Width=available-4;
-            bool stack=available<760;
-            outputCards.SuspendLayout();
-            if(stack)
-            {
-                outputCards.ColumnCount=1; outputCards.RowCount=2; outputCards.ColumnStyles.Clear(); outputCards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100)); outputCards.RowStyles.Clear(); outputCards.RowStyles.Add(new RowStyle(SizeType.Absolute,170)); outputCards.RowStyles.Add(new RowStyle(SizeType.Absolute,170));
-                outputCards.SetCellPosition(primaryCard,new TableLayoutPanelCellPosition(0,0)); outputCards.SetCellPosition(secondaryCard,new TableLayoutPanelCellPosition(0,1)); outputCards.Height=340; homeLayout.RowStyles[1].Height=340;
-            }
-            else
-            {
-                outputCards.ColumnCount=2; outputCards.RowCount=1; outputCards.ColumnStyles.Clear(); outputCards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,50)); outputCards.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,50)); outputCards.RowStyles.Clear(); outputCards.RowStyles.Add(new RowStyle(SizeType.Percent,100));
-                outputCards.SetCellPosition(primaryCard,new TableLayoutPanelCellPosition(0,0)); outputCards.SetCellPosition(secondaryCard,new TableLayoutPanelCellPosition(1,0)); outputCards.Height=170; homeLayout.RowStyles[1].Height=170;
-            }
-            outputCards.ResumeLayout(); homeLayout.Height=56+outputCards.Height+170+66+12;
         }
         private void StartRecordingMonitor()
         {
@@ -1209,15 +1639,6 @@ namespace WolfHubAudio
             if(hadSignal&&!recordingMeter.IsDisposed)recordingMeter.Invalidate();
         }
         private bool recordingMeterDisabled;
-        private void PositionRecordingControls()
-        {
-            if(recordingCard==null||recordingPrivacyButton==null)return;
-            int pad=16; int reserved=recordingPrivacyButton.Visible?380:200;
-            int width=Math.Max(100,recordingCard.ClientSize.Width-pad*2-reserved);
-            recordingMeterLabel.SetBounds(pad,119,width,20); recordingMeter.SetBounds(pad,143,width,8);
-            int rightOfMain=recordingMainButton==null?recordingCard.ClientSize.Width-pad:recordingMainButton.Left-8;
-            recordingPrivacyButton.SetBounds(Math.Max(pad,rightOfMain-recordingPrivacyButton.Width),132,recordingPrivacyButton.Width,30);
-        }
         private void OpenMicrophonePrivacySettings()
         {
             try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName=RecordingLevelMonitor.MicrophonePrivacySettingsUri,UseShellExecute=true }); SetStatus("Configurações de privacidade do microfone abertas."); }
@@ -1234,12 +1655,12 @@ namespace WolfHubAudio
             }
             recordingMeterDisabled=recordingMonitorError!=null;
             if(recordingPrivacyButton!=null)recordingPrivacyButton.Visible=recordingPermissionDenied;
-            if(wasPermissionVisible!=(recordingPrivacyButton!=null&&recordingPrivacyButton.Visible))PositionRecordingControls();
+            if(wasPermissionVisible!=(recordingPrivacyButton!=null&&recordingPrivacyButton.Visible)&&recordingCard!=null)recordingCard.PerformLayout();
             string label=RecordingMeterPresentation.GetLabel(recordingPeak,recordingMeterDisabled,recordingPermissionDenied,recordingMonitorError);
             if(recordingMeterLabel.Text!=label)
             {
                 recordingMeterLabel.Text=label;
-                recordingMeterLabel.ForeColor=recordingMeterDisabled?Color.FromArgb(120,142,158):(recordingPeak<0.005F?Color.FromArgb(120,142,158):Color.FromArgb(164,185,198));
+                recordingMeterLabel.ForeColor=recordingMeterDisabled?Color.FromArgb(120,142,158):(recordingPeak<0.005F?Color.FromArgb(140,162,178):Color.FromArgb(85,216,230));
             }
             string help=recordingMonitorError!=null?(recordingMonitorHelp??recordingMonitorError):(recordingPeak<0.005F?"Sem sinal do microfone. Fale ou produza som próximo ao dispositivo para verificar o nível.":"Nível de pico lido localmente. WolfHub Audio não grava nem armazena o áudio.");
             if(tips.GetToolTip(recordingMeterLabel)!=help)tips.SetToolTip(recordingMeterLabel,help);
@@ -1254,9 +1675,17 @@ namespace WolfHubAudio
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
-            try { int enabled=1; int hr=DwmSetWindowAttribute(Handle,20,ref enabled,sizeof(int)); if(hr!=0)DwmSetWindowAttribute(Handle,19,ref enabled,sizeof(int)); } catch { }
+            GraphicsExtensions.ApplyDarkTitleBar(Handle);
         }
-        private void SetStatus(string text) { if(statusLabel!=null) statusLabel.Text=text; if(settingsStatusLabel!=null)settingsStatusLabel.Text=text; }
+        private void SetStatus(string text)
+        {
+            if(statusLabel!=null)
+            {
+                statusLabel.Text=text;
+                statusLabel.ForeColor=text=="Alterações não salvas neste perfil."?Color.FromArgb(255,198,109):Color.FromArgb(146,168,184);
+            }
+            if(settingsStatusLabel!=null)settingsStatusLabel.Text=text;
+        }
         private bool IsDirty()
         {
             if(String.IsNullOrEmpty(displayedProfileId))return false;
@@ -1275,20 +1704,35 @@ namespace WolfHubAudio
         private void RefreshProfileList()
         {
             if(profileList==null)return; profileList.SuspendLayout(); profileList.Controls.Clear();
-            foreach(var p in preferences.Profiles)
+            foreach(var p in ProfileSidebarOrdering.Order(preferences.Profiles,displayedProfileId,preferences.AppliedProfileId))
             {
                 string id=p.Id; bool selected=id==displayedProfileId,applied=id==preferences.AppliedProfileId;
-                var b=new ProfileEntryButton { Text=p.Name,Selected=selected,Applied=applied,Width=Math.Max(180,profileList.ClientSize.Width-24),Height=40,Font=new Font("Segoe UI",10F,selected?FontStyle.Bold:FontStyle.Regular),Margin=new Padding(0,3,0,3) };
-                tips.SetToolTip(b,applied?"Este perfil foi aplicado ao Windows":"Selecionar este perfil"); b.Click+=delegate { SelectProfile(id); }; profileList.Controls.Add(b);
+                var b=new ProfileEntryButton { Text=p.Name,Selected=selected,Applied=applied,Height=40,Font=new Font("Segoe UI",9.75F,selected?FontStyle.Bold:FontStyle.Regular),Margin=Padding.Empty };
+                tips.SetToolTip(b,applied?"Este perfil está aplicado ao Windows":"Selecionar este perfil"); b.Click+=delegate { SelectProfile(id); }; profileList.Controls.Add(b);
             }
-            profileList.ResumeLayout();
+            profileList.ResumeLayout(false); LayoutProfileEntries();
+        }
+        private void LayoutProfileEntries()
+        {
+            if(profileList==null)return;
+            int gap=UiSpacing.Scale(profileList,6),height=UiSpacing.Scale(profileList,40);
+            int count=profileList.Controls.Count;
+            int totalHeight=count>0?(count*height+(count-1)*gap):0;
+            bool needsScroll=profileList.ClientSize.Height>0&&totalHeight>profileList.ClientSize.Height;
+            if(profileList.AutoScroll!=needsScroll)profileList.AutoScroll=needsScroll;
+            int scrollInset=needsScroll?SystemInformation.VerticalScrollBarWidth:0;
+            int width=Math.Max(0,profileList.ClientSize.Width-scrollInset);
+            int y=0;
+            foreach(Control item in profileList.Controls) { item.SetBounds(0,y,width,height); y+=height+gap; }
+            profileList.AutoScrollMinSize=needsScroll?new Size(0,totalHeight):Size.Empty;
         }
         private void UpdateProfileHeader()
         {
             var p=preferences.Profiles.FirstOrDefault(x=>x.Id==displayedProfileId); if(p==null)return;
-            profileTitle.Text=p.Name; tips.SetToolTip(profileTitle,p.Name); activeBadge.Text=p.Id==preferences.AppliedProfileId?"Ativo no Windows":"Ainda não aplicado";
-            activeBadge.ForeColor=p.Id==preferences.AppliedProfileId?Color.FromArgb(84,214,160):Color.FromArgb(164,185,198);
-            activeBadge.BackColor=p.Id==preferences.AppliedProfileId?Color.FromArgb(20,53,49):Color.FromArgb(28,45,61);
+            bool isApplied=p.Id==preferences.AppliedProfileId;
+            profileTitle.Text=p.Name; tips.SetToolTip(profileTitle,p.Name);
+            activeBadge.Text=isApplied?"Ativo no Windows":"Não aplicado";
+            activeBadge.IsActive=isApplied;
             RefreshProfileList(); UpdateDirtyState();
         }
         private void SelectProfile(string id)
@@ -1309,7 +1753,7 @@ namespace WolfHubAudio
                 cachedDevices=AudioCore.Enumerate(preferences);
                 string primary=SelectedId(primaryCombo),secondary=SelectedId(secondaryCombo),recording=SelectedId(recordingCombo);
                 loadingUi=true;
-                try { FillCombo(primaryCombo,Flow.Render,primary); FillCombo(secondaryCombo,Flow.Render,secondary); FillCombo(recordingCombo,Flow.Capture,recording); }
+                try { FillCombo(primaryCombo,Flow.Render,primary,true); FillCombo(secondaryCombo,Flow.Render,secondary,false); FillCombo(recordingCombo,Flow.Capture,recording,true); }
                 finally { loadingUi=false; }
                 bool selectedRecordingAvailable=cachedDevices.Any(x=>x.Id==recording&&x.Flow==Flow.Capture&&x.IsActive&&!x.IsDisabled);
                 if(recording!=recordingMonitorDeviceId||(recordingMonitor==null&&recordingMonitorError!=null&&selectedRecordingAvailable))StartRecordingMonitor();
@@ -1327,7 +1771,7 @@ namespace WolfHubAudio
             }
             catch(Exception ex) { SetStatus("Não foi possível consultar os dispositivos de áudio: "+ex.Message); }
         }
-        private void FillCombo(ComboBox combo,Flow flow,string selectedId)
+        private void FillCombo(ComboBox combo,Flow flow,string selectedId,bool selectFirstIfMissing=true)
         {
             combo.BeginUpdate(); combo.Items.Clear();
             var available=cachedDevices.Where(x=>x.Flow==flow&&x.IsActive&&!x.IsDisabled&&!x.IsHidden).ToList();
@@ -1345,7 +1789,7 @@ namespace WolfHubAudio
                 string state=saved!=null&&saved.IsHidden?"Oculto globalmente · ":"Indisponível ou desconectado · ";
                 combo.Items.Add(new AudioChoice { Id=selectedId,Label=state+name });
             }
-            combo.EndUpdate(); SelectComboId(combo,selectedId);
+            combo.EndUpdate(); SelectComboId(combo,selectedId,selectFirstIfMissing);
         }
         private string SelectedId(ComboBox combo) { var choice=combo.SelectedItem as AudioChoice; return choice==null?"":choice.Id; }
         private void SelectComboId(ComboBox combo,string id,bool selectFirstIfMissing=true)
@@ -1584,29 +2028,31 @@ namespace WolfHubAudio
         public DevicePicker(List<AudioDevice> devices,Preferences preferences,string title)
         {
             this.devices=devices; Text=title; Width=520; Height=194; FormBorderStyle=FormBorderStyle.FixedDialog; StartPosition=FormStartPosition.CenterParent; MinimizeBox=false; MaximizeBox=false; BackColor=Color.FromArgb(11,17,27); ForeColor=Color.FromArgb(237,248,250); Font=new Font("Segoe UI",9.5F);
-            var label=new Label { Text=title,Left=14,Top=12,Width=470,ForeColor=Color.FromArgb(237,248,250),BackColor=BackColor };
-            combo.DropDownStyle=ComboBoxStyle.DropDownList; combo.BackColor=Color.FromArgb(21,34,49); combo.ForeColor=Color.FromArgb(237,248,250); combo.FlatStyle=FlatStyle.Flat; combo.DrawMode=DrawMode.OwnerDrawFixed; combo.ItemHeight=25;
-            combo.DrawItem+=delegate(object s,DrawItemEventArgs e) { if(e.Index<0)return; var c=combo.Items[e.Index] as AudioChoice; if(c==null)return; bool selected=(e.State&DrawItemState.Selected)!=0; using(var b=new SolidBrush(selected?Color.FromArgb(37,71,83):combo.BackColor))e.Graphics.FillRectangle(b,e.Bounds); TextRenderer.DrawText(e.Graphics,c.Label,combo.Font,Rectangle.Inflate(e.Bounds,-6,0),selected?Color.FromArgb(57,197,214):Color.FromArgb(237,248,250),TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis); };
+            var label=new Label { Text=title,Left=16,Top=14,Width=470,Height=22,ForeColor=Color.FromArgb(237,248,250),BackColor=BackColor };
+            combo.DropDownStyle=ComboBoxStyle.DropDownList; combo.BackColor=Color.FromArgb(21,34,49); combo.ForeColor=Color.FromArgb(237,248,250); combo.FlatStyle=FlatStyle.Flat; combo.DrawMode=DrawMode.OwnerDrawFixed; combo.ItemHeight=26;
+            combo.DrawItem+=delegate(object s,DrawItemEventArgs e) { if(e.Index<0)return; var c=combo.Items[e.Index] as AudioChoice; if(c==null)return; bool selected=(e.State&DrawItemState.Selected)!=0; using(var b=new SolidBrush(selected?Color.FromArgb(32,64,78):Color.FromArgb(16,26,39)))e.Graphics.FillRectangle(b,e.Bounds); TextRenderer.DrawText(e.Graphics,c.Label,combo.Font,Rectangle.Inflate(e.Bounds,-8,0),selected?Color.FromArgb(85,216,230):Color.FromArgb(237,248,250),TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix); };
             foreach(var d in devices) combo.Items.Add(new AudioChoice { Id=d.Id,Label=d.TypeName+" · "+(preferences.GetAlias(d.Id)??d.Name) });
             if(combo.Items.Count>0)combo.SelectedIndex=0;
-            var comboHost=new ThemedComboHost(combo); comboHost.SetBounds(14,40,470,40);
-            var ok=new RoundedButton { Text="Continuar",Left=310,Top=108,Width=82,Height=36,Primary=true,DialogResult=DialogResult.OK,ForeColor=Color.FromArgb(237,248,250),Font=new Font("Segoe UI",9F) };
-            var cancel=new RoundedButton { Text="Cancelar",Left=402,Top=108,Width=82,Height=36,DialogResult=DialogResult.Cancel,ForeColor=Color.FromArgb(237,248,250),Font=new Font("Segoe UI",9F) };
+            var comboHost=new ThemedComboHost(combo); comboHost.SetBounds(16,42,470,38);
+            var ok=new RoundedButton { Text="Continuar",Left=300,Top=100,Width=90,Height=36,Primary=true,DialogResult=DialogResult.OK,ForeColor=Color.FromArgb(237,248,250),Font=new Font("Segoe UI",9F) };
+            var cancel=new RoundedButton { Text="Cancelar",Left=398,Top=100,Width=88,Height=36,DialogResult=DialogResult.Cancel,ForeColor=Color.FromArgb(237,248,250),Font=new Font("Segoe UI",9F) };
             Controls.AddRange(new Control[]{label,comboHost,ok,cancel}); AcceptButton=ok; CancelButton=cancel;
         }
+        protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); GraphicsExtensions.ApplyDarkTitleBar(Handle); }
     }
     internal sealed class Prompt : Form
     {
         private TextBox input;
         private Prompt(string message,string title,string initial)
         {
-            Text=title; Width=440; Height=155; FormBorderStyle=FormBorderStyle.FixedDialog; StartPosition=FormStartPosition.CenterParent; MinimizeBox=false; MaximizeBox=false; BackColor=Color.FromArgb(11,17,27); ForeColor=Color.FromArgb(237,248,250); Font=new Font("Segoe UI",9.5F);
-            var label=new Label { Text=message,Left=12,Top=12,Width=400,Height=24,ForeColor=Color.FromArgb(237,248,250),BackColor=BackColor };
-            input=new TextBox { Left=12,Top=42,Width=400,Height=28,Text=initial??"",BackColor=Color.FromArgb(21,34,49),ForeColor=Color.FromArgb(237,248,250),BorderStyle=BorderStyle.FixedSingle };
-            var ok=new RoundedButton { Text="Salvar",Left=250,Top=82,Width=76,Height=34,DialogResult=DialogResult.OK,Primary=true,ForeColor=Color.FromArgb(237,248,250),Font=new Font("Segoe UI",9F) };
-            var cancel=new RoundedButton { Text="Cancelar",Left=337,Top=82,Width=76,Height=34,DialogResult=DialogResult.Cancel,ForeColor=Color.FromArgb(237,248,250),Font=new Font("Segoe UI",9F) };
+            Text=title; Width=440; Height=164; FormBorderStyle=FormBorderStyle.FixedDialog; StartPosition=FormStartPosition.CenterParent; MinimizeBox=false; MaximizeBox=false; BackColor=Color.FromArgb(11,17,27); ForeColor=Color.FromArgb(237,248,250); Font=new Font("Segoe UI",9.5F);
+            var label=new Label { Text=message,Left=16,Top=14,Width=392,Height=24,ForeColor=Color.FromArgb(237,248,250),BackColor=BackColor };
+            input=new TextBox { Left=16,Top=42,Width=392,Height=28,Text=initial??"",BackColor=Color.FromArgb(15,25,37),ForeColor=Color.FromArgb(237,248,250),BorderStyle=BorderStyle.FixedSingle };
+            var ok=new RoundedButton { Text="Salvar",Left=236,Top=82,Width=82,Height=34,DialogResult=DialogResult.OK,Primary=true,ForeColor=Color.FromArgb(237,248,250),Font=new Font("Segoe UI",9F) };
+            var cancel=new RoundedButton { Text="Cancelar",Left=326,Top=82,Width=82,Height=34,DialogResult=DialogResult.Cancel,ForeColor=Color.FromArgb(237,248,250),Font=new Font("Segoe UI",9F) };
             Controls.AddRange(new Control[]{label,input,ok,cancel}); AcceptButton=ok; CancelButton=cancel;
         }
+        protected override void OnHandleCreated(EventArgs e) { base.OnHandleCreated(e); GraphicsExtensions.ApplyDarkTitleBar(Handle); }
         public static string Show(string message,string title,string initial)
         { using(var p=new Prompt(message,title,initial)) return p.ShowDialog()==DialogResult.OK?p.input.Text:null; }
     }
@@ -1619,6 +2065,25 @@ namespace WolfHubAudio
             {
                 try
                 {
+                    if(UiSpacing.Scale(16,96)!=16||UiSpacing.Scale(16,120)!=20||UiSpacing.Scale(16,144)!=24||UiSpacing.Unscale(UiSpacing.Scale(760,120),120)!=760||UiSpacing.Unscale(UiSpacing.Scale(760,144),144)!=760||UiSpacing.CardPadding!=16||UiSpacing.ContainerGap!=12||UiSpacing.ElementGap!=8)
+                        throw new InvalidOperationException("UI spacing scale check failed.");
+                    if(HomeLayoutGeometry.CardsHeight!=468||HomeLayoutGeometry.HomeContentHeight!=612||HomeLayoutGeometry.MainColumnWidth(860)!=622||HomeLayoutGeometry.AudioCardHeight!=148||HomeLayoutGeometry.CardGap!=12)
+                        throw new InvalidOperationException("Home layout geometry check failed.");
+                    Rectangle[] stacked=HomeLayoutGeometry.StackedCardBounds(622,148,12);
+                    if(stacked.Length!=3||stacked[0]!=new Rectangle(0,0,622,148)||stacked[1]!=new Rectangle(0,160,622,148)||stacked[2]!=new Rectangle(0,320,622,148)||stacked[0].IntersectsWith(stacked[1])||stacked[1].IntersectsWith(stacked[2]))
+                        throw new InvalidOperationException("Vertical card layout check failed.");
+                    var addBounds=HomeLayoutGeometry.ProfileAddButtonBounds(new Size(182,56),32,4);
+                    if(addBounds!=new Rectangle(146,12,32,32)||addBounds.Left<0||addBounds.Top<0||addBounds.Right>182||addBounds.Bottom>56)
+                        throw new InvalidOperationException("Profile add button bounds check failed.");
+                    foreach(int dpi in new[]{96,120,144})
+                    {
+                        int width=UiSpacing.Scale(182,dpi),height=UiSpacing.Scale(56,dpi),buttonSize=UiSpacing.Scale(32,dpi),inset=UiSpacing.Scale(4,dpi);
+                        var scaledBounds=HomeLayoutGeometry.ProfileAddButtonBounds(new Size(width,height),buttonSize,inset);
+                        if(scaledBounds.Width!=buttonSize||scaledBounds.Height!=buttonSize||scaledBounds.Right>width-inset||scaledBounds.Bottom>height||scaledBounds.Left<0||scaledBounds.Top<0)
+                            throw new InvalidOperationException("Profile button DPI bounds check failed at "+dpi+" DPI.");
+                    }
+                    var sidebarOrder=ProfileSidebarOrdering.Order(new List<AudioProfile>{new AudioProfile{Id="default"},new AudioProfile{Id="gaming"},new AudioProfile{Id="work"}},"work","gaming").ToList();
+                    if(sidebarOrder.Count!=3||sidebarOrder[0].Id!="gaming"||sidebarOrder[1].Id!="work"||sidebarOrder[2].Id!="default")throw new InvalidOperationException("Profile sidebar order check failed.");
                     if(RecordingMeterPresentation.GetLabel(0,false,false,null)!="Sem sinal"||RecordingMeterPresentation.GetLabel(0.236F,false,false,null)!="Nível de entrada · 24%"||RecordingMeterPresentation.GetLabel(0,true,true,"permission")!="Medidor desativado · permissão necessária"||RecordingMeterPresentation.GetLabel(0,true,false,"unavailable")!="Nível indisponível")throw new InvalidOperationException("Recording meter presentation check failed.");
                     if(!RecordingMeterPresentation.ShouldRedraw(0,0.02F,false,false)||RecordingMeterPresentation.ShouldRedraw(0.03F,0.031F,false,false)||!RecordingMeterPresentation.ShouldRedraw(0,0,false,true))throw new InvalidOperationException("Recording meter redraw threshold check failed.");
                     IconResources.ValidateResources();
