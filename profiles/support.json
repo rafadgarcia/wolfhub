@@ -1,6 +1,9 @@
 {
   "id": "support",
-  "name": "Support",
-  "description": "Basic diagnostics and maintenance tools.",
-  "packages": ["hwinfo", "crystaldiskinfo-shizuku", "wiztree", "powertoys", "git"]
+  "name": "Suporte & Diagnóstico Técnico",
+  "description": "Kit rápido de diagnóstico de hardware, temperatura, saúde de SSD/HD, uso de disco e acesso remoto.",
+  "packages": [
+    "hwinfo", "cpuz", "crystaldiskinfo-shizuku", "crystaldiskmark-shizuku",
+    "wiztree", "chrome-remote-desktop", "powertoys", "git"
+  ]
 }

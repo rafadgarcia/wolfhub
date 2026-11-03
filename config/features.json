@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "features": [
+    {
+      "id": "packages.install",
+      "name": "Instalar programas selecionados",
+      "changes": "O WinGet baixa e instala os programas selecionados. O instalador de cada pacote pode solicitar elevação ou apresentar opções próprias.",
+      "dependencies": "WinGet / App Installer e os manifestos dos IDs selecionados.",
+      "permission": "O WinGet ou o instalador pode solicitar administrador, conforme o pacote.",
+      "reversible": "A lista inicial de programas do catálogo é guardada para comparação. A desinstalação não é automática e depende do suporte de cada pacote.",
+      "scope": "selected-packages"
+    },
+    {
+      "id": "packages.upgrade-all",
+      "name": "Atualizar programas pelo WinGet",
+      "changes": "Executa winget upgrade --all e pode atualizar qualquer pacote reconhecido pelo WinGet.",
+      "dependencies": "WinGet / App Installer e fontes de pacotes configuradas no Windows.",
+      "permission": "O WinGet ou um instalador pode solicitar administrador.",
+      "reversible": "As versões anteriores não são restauradas automaticamente; consulte as opções de downgrade de cada pacote.",
+      "scope": "system-packages"
+    },
+    {
+      "id": "toolkit.install",
+      "name": "Instalar ou atualizar utilitário WolfHub",
+      "changes": "Copia o executável selecionado para a pasta WolfHub e cria atalhos solicitados.",
+      "dependencies": "Arquivo executável local do módulo e Windows Shell para atalhos.",
+      "permission": "Pode exigir permissão de gravação na pasta de destino; não altera configurações do Windows.",
+      "reversible": "O arquivo e os atalhos podem ser removidos manualmente. As preferências próprias do aplicativo ficam separadas.",
+      "scope": "wolfhub-tool-files"
+    },
+    {
+      "id": "toolkit.install-suite",
+      "name": "Instalar o conjunto WolfHub",
+      "changes": "Copia os executáveis WolfHub disponíveis e cria atalhos na Área de Trabalho e no Menu Iniciar.",
+      "dependencies": "Executáveis locais disponíveis; Windows Shell para atalhos.",
+      "permission": "Pode exigir permissão de gravação na pasta de destino.",
+      "reversible": "Os executáveis e atalhos podem ser removidos manualmente. Dados de usuário dos aplicativos não são apagados.",
+      "scope": "wolfhub-tool-files"
+    },
+    {
+      "id": "drivers.vendor-installer",
+      "name": "Executar instalador de driver legado",
+      "changes": "Abre um instalador de terceiros para o hardware indicado pelo pacote local. O instalador pode alterar drivers e reiniciar dispositivos.",
+      "dependencies": "Pacote de driver local, modelo exato de hardware e versão compatível do Windows.",
+      "permission": "O instalador pode solicitar administrador.",
+      "reversible": "Depende do instalador e do ponto de restauração do Windows. Verifique o modelo da placa antes de continuar.",
+      "scope": "vendor-installer"
+    },
+    {
+      "id": "tweaks.power-plan",
+      "name": "Alterar plano de energia",
+      "changes": "Ativa o plano de energia escolhido. Alguns planos podem ser adicionados à lista do Windows.",
+      "dependencies": "Windows powercfg.exe e plano compatível.",
+      "permission": "Normalmente não exige elevação para ativar um plano disponível.",
+      "reversible": "O backup local guarda o GUID do plano ativo e permite reativá-lo. Planos adicionados não são removidos automaticamente.",
+      "scope": "current-user-power-plan"
+    },
+    {
+      "id": "tweaks.explorer",
+      "name": "Alterar opções do Explorador",
+      "changes": "Altera no registro do usuário atual a exibição de extensões e itens ocultos.",
+      "dependencies": "Registro do usuário atual e Windows Explorer.",
+      "permission": "Não exige administrador; afeta o perfil Windows atual.",
+      "reversible": "Os valores originais são salvos no backup local e podem ser restaurados.",
+      "scope": "current-user-registry"
+    },
+    {
+      "id": "tweaks.context-menu",
+      "name": "Alterar menu de contexto do Windows 11",
+      "changes": "Cria ou remove a chave CLSID do menu clássico no registro do usuário atual.",
+      "dependencies": "Registro do usuário atual e versão do Windows que reconhece essa chave.",
+      "permission": "Não exige administrador; pode ser necessário reiniciar o Explorer ou sair da sessão.",
+      "reversible": "A árvore de registro original é exportada no backup local e pode ser restaurada.",
+      "scope": "current-user-registry"
+    },
+    {
+      "id": "tweaks.flush-dns",
+      "name": "Limpar cache DNS",
+      "changes": "Executa ipconfig /flushdns para limpar o cache de resolução do Windows.",
+      "dependencies": "ipconfig.exe e serviço de cliente DNS do Windows.",
+      "permission": "O Windows pode exigir elevação.",
+      "reversible": "Não há restauração necessária; o cache volta a ser preenchido durante o uso.",
+      "scope": "transient-cache"
+    }
+  ]
+}

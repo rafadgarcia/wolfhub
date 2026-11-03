@@ -1,6 +1,6 @@
 {
   "id": "minimal",
-  "name": "Minimal",
-  "description": "Browser, archive utility and essential runtimes.",
-  "packages": ["chrome", "winrar", "dotnet8", "vcredist-x64", "vcredist-x86"]
+  "name": "Essencial / Básico",
+  "description": "Navegador, descompactador e runtimes essenciais para qualquer computador recém-formatado.",
+  "packages": ["dotnet10", "dotnet8", "vcredist-x64", "vcredist-x86", "chrome", "winrar", "klite-mega"]
 }

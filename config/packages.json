@@ -1,20 +1,230 @@
 {
-  "version": 1,
+  "version": 2,
   "packages": [
-    { "id": "chrome", "name": "Google Chrome", "wingetId": "Google.Chrome", "category": "Browsers", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "steam", "name": "Steam", "wingetId": "Valve.Steam", "category": "Gaming", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "winrar", "name": "WinRAR", "wingetId": "RARLab.WinRAR", "category": "Utilities", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "powertoys", "name": "Microsoft PowerToys", "wingetId": "Microsoft.PowerToys", "category": "Utilities", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "hwinfo", "name": "HWiNFO", "wingetId": "REALiX.HWiNFO", "category": "Diagnostics", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "crystaldiskinfo-shizuku", "name": "CrystalDiskInfo Shizuku Edition", "wingetId": "CrystalDewWorld.CrystalDiskInfo.ShizukuEdition", "category": "Diagnostics", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "wiztree", "name": "WizTree", "wingetId": "AntibodySoftware.WizTree", "category": "Diagnostics", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "qbittorrent", "name": "qBittorrent", "wingetId": "qBittorrent.qBittorrent", "category": "Internet", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "obs", "name": "OBS Studio", "wingetId": "OBSProject.OBSStudio", "category": "Media", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "git", "name": "Git", "wingetId": "Git.Git", "category": "Development", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "gh", "name": "GitHub CLI", "wingetId": "GitHub.cli", "category": "Development", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "fancontrol", "name": "Fan Control", "wingetId": "Rem0o.FanControl", "category": "Diagnostics", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "dotnet8", "name": ".NET Desktop Runtime 8", "wingetId": "Microsoft.DotNet.DesktopRuntime.8", "category": "Runtimes", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "vcredist-x64", "name": "Microsoft Visual C++ 2015-2022 x64", "wingetId": "Microsoft.VCRedist.2015+.x64", "category": "Runtimes", "source": "Winget.bat", "idStatus": "inherited-unverified" },
-    { "id": "vcredist-x86", "name": "Microsoft Visual C++ 2015-2022 x86", "wingetId": "Microsoft.VCRedist.2015+.x86", "category": "Runtimes", "source": "Winget.bat", "idStatus": "inherited-unverified" }
+    {
+      "id": "dotnet10",
+      "name": "Microsoft .NET Desktop Runtime 10",
+      "wingetId": "Microsoft.DotNet.DesktopRuntime.10",
+      "category": "Runtimes",
+      "description": "Runtime oficial da Microsoft necessário para rodar aplicativos desktop modernos feitos em .NET 10.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "dotnet8",
+      "name": ".NET Desktop Runtime 8",
+      "wingetId": "Microsoft.DotNet.DesktopRuntime.8",
+      "category": "Runtimes",
+      "description": "Runtime LTS (.NET 8) exigido por grande parte dos utilitários de sistema atuais (como Fan Control e apps WPF/WinForms).",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "vcredist-x64",
+      "name": "Microsoft Visual C++ 2015-2022 x64",
+      "wingetId": "Microsoft.VCRedist.2015+.x64",
+      "category": "Runtimes",
+      "description": "Pacote essencial de bibliotecas C++ 64 bits exigido pela maioria dos jogos e programas no Windows.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "vcredist-x86",
+      "name": "Microsoft Visual C++ 2015-2022 x86",
+      "wingetId": "Microsoft.VCRedist.2015+.x86",
+      "category": "Runtimes",
+      "description": "Pacote essencial de bibliotecas C++ 32 bits para compatibilidade com jogos e aplicativos de 32 bits.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "chrome",
+      "name": "Google Chrome",
+      "wingetId": "Google.Chrome",
+      "category": "Navegadores & Comunicação",
+      "description": "Navegador web principal do Google.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "chrome-remote-desktop",
+      "name": "Chrome Remote Desktop",
+      "wingetId": "Google.ChromeRemoteDesktop",
+      "category": "Navegadores & Comunicação",
+      "description": "Serviço de acesso remoto do Google Chrome para conectar ou prestar suporte remoto rapidamente.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "discord",
+      "name": "Discord",
+      "wingetId": "Discord.Discord",
+      "category": "Navegadores & Comunicação",
+      "description": "Comunicação por voz, vídeo e chat para jogos, comunidades e trabalho.",
+      "source": "WolfHub",
+      "idStatus": "verified"
+    },
+    {
+      "id": "steam",
+      "name": "Steam",
+      "wingetId": "Valve.Steam",
+      "category": "Games",
+      "description": "Plataforma e biblioteca principal de jogos para PC da Valve.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "epic-games",
+      "name": "Epic Games Launcher",
+      "wingetId": "EpicGames.EpicGamesLauncher",
+      "category": "Games",
+      "description": "Launcher da Epic Games Store, Unreal Engine e jogos gratuitos semanais.",
+      "source": "WolfHub",
+      "idStatus": "verified"
+    },
+    {
+      "id": "lol-br",
+      "name": "League of Legends (BR)",
+      "wingetId": "RiotGames.LeagueOfLegends.BR",
+      "category": "Games",
+      "description": "Instalador oficial do cliente Riot Games / League of Legends para o servidor brasileiro.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "hwinfo",
+      "name": "HWiNFO",
+      "wingetId": "REALiX.HWiNFO",
+      "category": "Hardware & Diagnóstico",
+      "description": "Monitoramento completo de sensores em tempo real (temperaturas, tensões, clocks) e inventário detalhado do hardware.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "cpuz",
+      "name": "CPU-Z",
+      "wingetId": "CPUID.CPU-Z",
+      "category": "Hardware & Diagnóstico",
+      "description": "Utilitário clássico para verificar modelo exato do processador, placa-mãe, versão da BIOS e timings/frequência da memória RAM.",
+      "source": "WolfHub",
+      "idStatus": "verified"
+    },
+    {
+      "id": "crystaldiskinfo-shizuku",
+      "name": "CrystalDiskInfo Shizuku Edition",
+      "wingetId": "CrystalDewWorld.CrystalDiskInfo.ShizukuEdition",
+      "category": "Hardware & Diagnóstico",
+      "description": "Monitora a saúde S.M.A.R.T., temperatura e vida útil de SSDs NVMe/SATA e HDs (Edição especial Shizuku).",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "crystaldiskmark-shizuku",
+      "name": "CrystalDiskMark Shizuku Edition",
+      "wingetId": "CrystalDewWorld.CrystalDiskMark.ShizukuEdition",
+      "category": "Hardware & Diagnóstico",
+      "description": "Benchmark de velocidade de leitura e gravação sequencial e aleatória para testar SSDs e pendrives (Edição Shizuku).",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "pawnio",
+      "name": "PawnIO",
+      "wingetId": "namazso.PawnIO",
+      "category": "Hardware & Diagnóstico",
+      "description": "Driver moderno e seguro de acesso a hardware de baixo nível (substituto seguro do WinRing0 usado por Fan Control e OpenRGB).",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "fancontrol",
+      "name": "Fan Control",
+      "wingetId": "Rem0o.FanControl",
+      "category": "Hardware & Diagnóstico",
+      "description": "Gerenciador avançado de curvas de ventoinhas da placa-mãe e placa de vídeo baseado em múltiplos sensores de temperatura.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "openrgb",
+      "name": "OpenRGB",
+      "wingetId": "OpenRGB.OpenRGB",
+      "category": "Hardware & Diagnóstico",
+      "description": "Controle unificado e leve de iluminação RGB (placa-mãe, RAM, GPU e periféricos) sem precisar instalar bloatwares de fabricantes.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "wiztree",
+      "name": "WizTree",
+      "wingetId": "AntibodySoftware.WizTree",
+      "category": "Utilitários & Mídia",
+      "description": "Analisador ultra-rápido de espaço em disco (lê a tabela MFT do NTFS direto) para descobrir o que está lotando o SSD.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "winrar",
+      "name": "WinRAR",
+      "wingetId": "RARLab.WinRAR",
+      "category": "Utilitários & Mídia",
+      "description": "Compactador e descompactador clássico para arquivos .rar, .zip e .7z.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "powertoys",
+      "name": "Microsoft PowerToys",
+      "wingetId": "Microsoft.PowerToys",
+      "category": "Utilitários & Mídia",
+      "description": "Pacote oficial de utilitários avançados para Windows (FancyZones, PowerToys Run, seletor de cores, extrator de texto OCR).",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "klite-mega",
+      "name": "K-Lite Codec Pack Mega + MPC-HC",
+      "wingetId": "CodecGuide.K-LiteCodecPack.Mega",
+      "category": "Utilitários & Mídia",
+      "description": "Pacote completo de codecs de áudio/vídeo junto com o player leve Media Player Classic (MPC-HC).",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "obs",
+      "name": "OBS Studio",
+      "wingetId": "OBSProject.OBSStudio",
+      "category": "Utilitários & Mídia",
+      "description": "Gravador de tela e software de transmissão ao vivo com suporte a codificação por hardware (NVENC/AMF/QSV).",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "qbittorrent",
+      "name": "qBittorrent",
+      "wingetId": "qBittorrent.qBittorrent",
+      "category": "Utilitários & Mídia",
+      "description": "Cliente BitTorrent leve, de código aberto e sem anúncios.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "git",
+      "name": "Git",
+      "wingetId": "Git.Git",
+      "category": "Desenvolvimento",
+      "description": "Sistema de controle de versão distribuído e terminal Git Bash.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    },
+    {
+      "id": "gh",
+      "name": "GitHub CLI",
+      "wingetId": "GitHub.cli",
+      "category": "Desenvolvimento",
+      "description": "Ferramenta oficial de linha de comando (`gh`) para autenticar e gerenciar repositórios do GitHub.",
+      "source": "Winget.bat",
+      "idStatus": "verified"
+    }
   ]
 }

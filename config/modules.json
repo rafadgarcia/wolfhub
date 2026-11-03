@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "modules": [
+    {
+      "id": "toolkit",
+      "name": "Meu Toolkit",
+      "purpose": "Executar e instalar utilitários portáteis mantidos pelo usuário.",
+      "dependencies": ["Executável local do utilitário", "Windows Shell para criação de atalhos"],
+      "status": "available",
+      "settings": "global",
+      "dataDirectory": "%LOCALAPPDATA%/WolfHub/Tools"
+    },
+    {
+      "id": "packages",
+      "name": "Pós-Formatação",
+      "purpose": "Selecionar programas WinGet individualmente ou por perfil reutilizável.",
+      "dependencies": ["WinGet / App Installer para instalar ou atualizar pacotes"],
+      "status": "available",
+      "settings": "config/packages.json e profiles/*.json",
+      "dataDirectory": "%LOCALAPPDATA%/WolfHub"
+    },
+    {
+      "id": "windows-tweaks",
+      "name": "Energia & Tweaks",
+      "purpose": "Aplicar ajustes do Windows com contexto, confirmação e restauração suportada.",
+      "dependencies": ["Windows 10/11", "powercfg.exe e registro do usuário atual"],
+      "status": "available",
+      "settings": "config/features.json",
+      "dataDirectory": "%LOCALAPPDATA%/WolfHub/backups"
+    },
+    {
+      "id": "audio-switcher",
+      "name": "WolfHub Audio",
+      "purpose": "Gerenciar perfis, saídas, gravação e alternância na bandeja em aplicativo independente.",
+      "dependencies": ["Windows Core Audio/WASAPI", ".NET Framework WinForms"],
+      "status": "available",
+      "settings": "%LOCALAPPDATA%/WolfHubAudio/settings.xml",
+      "dataDirectory": "%LOCALAPPDATA%/WolfHubAudio",
+      "updatePolicy": "Atualização do executável separada; as preferências do Audio Switcher permanecem em seu próprio XML."
+    },
+    {
+      "id": "drivers",
+      "name": "Drivers",
+      "purpose": "Materiais legados específicos de hardware; exigem validação do modelo antes de executar.",
+      "dependencies": ["Hardware ASUS B660M TUF compatível", "Instaladores locais do fabricante"],
+      "status": "legacy-manual",
+      "settings": "DriversRafa/ (fora do Git)",
+      "dataDirectory": "local"
+    },
+    {
+      "id": "system-backup",
+      "name": "Backup do Sistema",
+      "purpose": "Comparar o estado inicial e restaurar ajustes de energia e registro suportados.",
+      "dependencies": ["Acesso ao registro do usuário atual", "powercfg.exe"],
+      "status": "available",
+      "settings": "config/features.json",
+      "dataDirectory": "%LOCALAPPDATA%/WolfHub/backups"
+    },
+    {
+      "id": "debloat",
+      "name": "Debloat",
+      "purpose": "Remoção seletiva com simulação e reversão documentada.",
+      "dependencies": ["A definir após implementação"],
+      "status": "planned",
+      "settings": "future",
+      "dataDirectory": "future"
+    }
+  ]
+}

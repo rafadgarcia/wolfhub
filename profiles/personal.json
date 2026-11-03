@@ -1,6 +1,13 @@
 {
   "id": "personal",
-  "name": "Personal",
-  "description": "Personal applications drawn from the existing WinGet list.",
-  "packages": ["chrome", "steam", "winrar", "powertoys", "hwinfo", "crystaldiskinfo-shizuku", "wiztree", "qbittorrent", "obs", "git", "gh", "fancontrol", "dotnet8", "vcredist-x64", "vcredist-x86"]
+  "name": "Meu PC Completo (Pessoal & Games)",
+  "description": "Setup completo pós-formatação com runtimes, jogos, Discord, diagnóstico Shizuku/CPU-Z/HWiNFO, PawnIO e utilitários.",
+  "packages": [
+    "dotnet10", "dotnet8", "vcredist-x64", "vcredist-x86",
+    "chrome", "chrome-remote-desktop", "discord",
+    "steam", "epic-games", "lol-br",
+    "hwinfo", "cpuz", "crystaldiskinfo-shizuku", "crystaldiskmark-shizuku", "pawnio", "fancontrol", "openrgb",
+    "wiztree", "winrar", "powertoys", "klite-mega", "obs", "qbittorrent",
+    "git", "gh"
+  ]
 }

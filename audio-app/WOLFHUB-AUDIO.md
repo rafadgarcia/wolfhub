@@ -1,79 +1,82 @@
-# WolfHub Audio
+# WolfHub Audio — Guia de uso e comportamento
 
-## O que é
+## Propósito
 
-O **WolfHub Audio** é um aplicativo independente para organizar perfis e alternar dispositivos de saída e gravação no Windows. Pode ser executado como `.exe` e continua na área de notificação quando a janela é fechada.
+O WolfHub Audio é o aplicativo desktop do repositório para organizar perfis de áudio e selecionar dispositivos de reprodução e gravação no Windows. Ele usa WinForms, interfaces Core Audio/WASAPI do Windows e persiste preferências em XML. Não depende do módulo PowerShell `AudioDeviceCmdlets`.
 
-## Janela principal
+## Perfis: visualizar e ativar
 
-A sidebar lista perfis e diferencia o perfil selecionado do perfil aplicado ao Windows. O painel mostra três seletores: saída principal, saída secundária e dispositivo de gravação. Os nomes dos padrões atuais do Windows aparecem na parte inferior e também têm tooltip com o nome completo.
+A sidebar diferencia o perfil atualmente visualizado do perfil aplicado aos padrões do Windows. O perfil aplicado aparece primeiro e tem um indicador próprio.
 
-Escolher dispositivos no formulário cria um rascunho. **Salvar perfil** grava os identificadores no XML local, sem mudar os padrões do Windows. Ao trocar ou excluir um perfil com alterações não salvas, o aplicativo oferece salvar, descartar ou cancelar.
+- **Clique simples** em um perfil: abre esse perfil para visualização. Alterações nos seletores são salvas automaticamente.
+- **Duplo clique**: abre e ativa o perfil no Windows.
+- **Ativar perfil**: aplica a saída principal e o microfone disponíveis do perfil.
+- **Mais**: duplicar, renomear ou excluir. Excluir requer confirmação; o último perfil não pode ser removido.
+
+Como as alterações do formulário são salvas automaticamente, a interface não mantém uma etapa de rascunho nem um botão de salvar perfil. O perfil selecionado e o perfil aplicado continuam sendo estados diferentes.
+
+## Dispositivos do perfil
+
+Os cards aparecem em uma única coluna, na ordem atual **Saída principal → Saída secundária → Dispositivo de gravação**. Cada seletor conserva o ID real do endpoint. Apelidos mudam apenas o nome exibido no WolfHub Audio.
 
 ### Saída principal
 
-O botão **Definir principal** aplica a saída principal do perfil e também o dispositivo de gravação configurado, quando disponível.
+Selecionar outra saída salva o perfil imediatamente. Se o perfil aberto já estiver aplicado, a nova saída também é definida como padrão no Windows. Em um perfil ainda não aplicado, use **Ativar perfil** para aplicar sua saída e gravação.
 
 ### Saída secundária
 
-O botão **Salvar secundária** grava a escolha no perfil. Salvar não ativa automaticamente essa saída; ela fica disponível para alternância pela bandeja.
+A segunda saída é opcional. Escolher **Nenhuma saída secundária (desativada)** remove a alternativa do perfil. Salvar uma saída secundária não muda o padrão do Windows. **Alternar** só fica habilitado quando as saídas principal e secundária estão disponíveis e são diferentes.
 
 ### Dispositivo de gravação
 
-O botão **Definir gravação** pede confirmação antes de alterar o padrão de captura do Windows. Enquanto a janela está visível, o card abre um fluxo WASAPI compartilhado no microfone selecionado e calcula um nível de pico a partir dos pacotes recebidos. Os samples são descartados após o cálculo; WolfHub Audio não grava nem armazena áudio. Ao ocultar a janela para a bandeja, a captura é encerrada. Se o acesso for bloqueado, o medidor aparece desativado com uma dica e o botão **Abrir permissões**, que abre `ms-settings:privacy-microphone`. Ative **Permitir que aplicativos da área de trabalho acessem o microfone** e reinicie o WolfHub Audio. Erros de driver sem suporte, endpoint invalidado e formato incompatível são apresentados como estados distintos. Endpoints desconectados ou inativos aparecem como indisponíveis.
+O medidor apresenta o nível de pico lido do endpoint selecionado via WASAPI enquanto a janela está visível. O aplicativo calcula o nível e descarta os samples; não grava nem armazena áudio. Ao ocultar a janela na bandeja, o monitor é parado.
 
-### Testar saída
+Selecionar um microfone em um perfil já aplicado também o define como padrão no Windows. **Usar agora** define o endpoint escolhido imediatamente. Se o acesso estiver bloqueado, o medidor mostra o estado de permissão e **Abrir permissões** abre as configurações de privacidade do microfone do Windows. Ative a permissão para aplicativos da área de trabalho e reabra o WolfHub Audio.
 
-O botão **Testar** pede confirmação e envia um tom curto diretamente ao endpoint escolhido usando uma sessão WASAPI. Assim, o som do teste não depende do dispositivo padrão do Windows e não altera temporariamente as saídas do sistema. Endpoints indisponíveis ou formatos não suportados apresentam erro em vez de redirecionar o teste para outra saída.
+## Teste das saídas
 
-## Bandeja do Windows
+**Testar** envia um tom curto diretamente ao endpoint de saída selecionado por uma sessão WASAPI. Não muda temporariamente o padrão do Windows. O teste é executado sem uma confirmação intermediária; selecione o dispositivo correto e ajuste o volume do sistema antes de usá-lo. Se o endpoint ou seu formato não for compatível, o erro aparece no aplicativo em vez de o som ser enviado a outro dispositivo.
 
-- **Clique simples:** consulta a saída e o microfone atuais.
-- **Duplo clique:** alterna entre a saída principal e a secundária do perfil aplicado. A ação é bloqueada quando o perfil não tem duas saídas válidas.
-- **Botão direito > Perfis:** lista os perfis; escolher um aplica a saída principal e o microfone disponíveis.
-- **Abrir WolfHub Audio:** abre a janela de configuração.
-- **Consultar áudio atual:** mostra os endpoints padrão atuais.
-- **Alternar saída principal / secundária:** executa a mesma alternância do duplo clique.
-- **Testar saída atual:** testa a saída padrão após confirmação.
-- **Sair:** encerra o processo em vez de mantê-lo na bandeja.
+O teste da lista de Configurações também está disponível apenas para endpoints de saída. O aplicativo não apresenta um teste fictício para microfones.
 
-## Configurações avançadas
+## Configurações globais
 
-A página **Configurações globais** reúne duas ações de dispositivos (**Gerenciar apelidos** e **Gerenciar visibilidade**), a preferência **Iniciar com o Windows** e **Reiniciar como administrador**. Essas opções não pertencem a nenhum perfil; o aplicativo não inicia elevado por padrão.
+Configurações oculta a sidebar de perfis e oferece uma lista global de dispositivos, com filtros **Todos**, **Saídas** e **Gravação**.
 
-**Gerenciar visibilidade** lista endpoints de saída e gravação, com tipo, estado de atividade, estado de visibilidade registrado pelo WolfHub e indicação de padrão atual/uso no perfil selecionado. A chave chama a mesma API de política de áudio existente e pede confirmação; algumas máquinas podem solicitar elevação pelo UAC. Saídas ativas têm ação **Testar**, com confirmação; gravações não mostram um teste fictício. O estado que o WolfHub altera é salvo como campo XML opcional, então arquivos antigos continuam sendo carregados. Mudanças feitas diretamente em outras ferramentas do Windows podem não estar refletidas na lista, e o resultado da API de visibilidade pode variar por versão do Windows e driver.
+- **Mostrar desconectados / desativados** inclui endpoints inativos na lista. Endpoints ocultos pelo WolfHub permanecem listados para permitir reexibi-los.
+- **Atualizar** consulta novamente os endpoints.
+- **Editar** permite definir ou limpar o apelido local do endpoint.
+- **Ocultar / Mostrar** adiciona ou remove o endpoint das listas de seleção de perfis e atualiza essa preferência imediatamente.
+- **Iniciar automaticamente com o Windows (na bandeja)** registra ou remove a entrada de inicialização do usuário atual.
+- **Reiniciar como Admin** aparece somente quando o processo não está elevado.
 
-Apelidos alteram somente como o endpoint aparece no WolfHub Audio. A lista global não depende do perfil para aplicar apelidos ou visibilidade; a indicação **Usado no perfil atual** serve apenas como contexto.
+Sem privilégios administrativos, ocultar um dispositivo altera as listas usadas pelo WolfHub Audio. Se o aplicativo já estiver elevado, ele também tenta aplicar a política de visibilidade do endpoint no Windows. Para aplicar essa política, o usuário pode reiniciar o aplicativo como administrador; a inicialização normal permanece sem elevação. A API pode variar conforme Windows e driver.
 
-## Persistência e compatibilidade
+## Bandeja
 
-Perfis, apelidos e preferência de inicialização são guardados em:
+- Clique simples: consulta saída e microfone padrões atuais.
+- Duplo clique: alterna entre principal e secundária do perfil aplicado.
+- Menu de contexto: abrir a janela, ativar um perfil, consultar estado, alternar saídas, testar a saída padrão ou sair.
+- Fechar a janela mantém o aplicativo na bandeja; **Sair** encerra o processo.
 
-```text
-%LOCALAPPDATA%\WolfHubAudio\settings.xml
-```
+## Persistência
 
-O formato XML existente é mantido. O identificador novo que diferencia perfil selecionado do aplicado é opcional na leitura de configurações antigas; instalações antigas começam com o perfil anteriormente selecionado como aplicado.
+O arquivo usado é `%LOCALAPPDATA%\WolfHubAudio\settings.xml`. Ele guarda os IDs dos endpoints, perfis, apelidos, endpoints ocultos e preferência de inicialização. Os campos adicionais são opcionais para que arquivos XML de versões anteriores continuem carregando.
 
-O aplicativo enumera endpoints Core Audio e mantém seus identificadores reais. Se um dispositivo salvo for desconectado ou mudar de identificador, a interface informa que está indisponível e permite selecionar outro.
+## Build e autoteste
 
-## Limitações
-
-- Apelidos não renomeiam dispositivos globalmente no Windows.
-- Não há controles de volume ou sliders nesta versão.
-- A disponibilidade das operações de visibilidade e troca de padrão depende das interfaces de áudio do Windows.
-- Compilar não valida fisicamente o som, o ícone da bandeja ou escalas de DPI. Faça esses testes manualmente no computador de destino.
-
-## Compilar
-
-Na raiz do projeto, execute em Windows PowerShell 5.1:
+Na raiz do projeto, em Windows PowerShell 5.1:
 
 ```powershell
 .\audio-app\build.ps1
-```
-
-O executável será criado em `audio-app/dist/WolfHubAudio.exe`. Para validar enumeração e persistência sem alterar os padrões do Windows:
-
-```powershell
 .\audio-app\dist\WolfHubAudio.exe --self-test
 ```
+
+O autoteste enumera endpoints e verifica recursos de ícones, estado de perfil, serialização e lógica de cálculo/tratamento do medidor. Ele não instala aplicativos, muda padrões do Windows, testa o som físico nem confirma uma entrada real de microfone.
+
+## Limitações conhecidas
+
+- Apelidos não renomeiam endpoints globalmente no Windows.
+- Não há controle de volume, gravação de áudio ou processamento de microfone.
+- A aplicação global de visibilidade pode depender de elevação e suporte do driver; a filtragem local nas listas do WolfHub permanece disponível.
+- Testes de áudio físico, permissões do microfone e escalas DPI precisam ser confirmados no computador de destino.
